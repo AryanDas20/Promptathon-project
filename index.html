@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vault: Fault-Tolerant Distributed Object Storage System</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -34,56 +34,60 @@
         }
     </script>
 
-    <style>
-        body {
-            background-color: #0b0f19;
-            color: #f3f4f6;
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-        }
-
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        .glass-card {
-            background: rgba(31, 41, 55, 0.4);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.25); }
-        .glow-emerald { box-shadow: 0 0 20px rgba(16, 185, 129, 0.25); }
-        .glow-rose { box-shadow: 0 0 20px rgba(244, 63, 94, 0.25); }
-
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0b0f19; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="min-h-screen flex flex-col justify-between antialiased selection:bg-cyan-500 selection:text-black">
 
-    <header class="glass-panel sticky top-0 z-40 border-b border-gray-800 px-4 py-3">
+    <!-- ================= INTERACTIVE BACKGROUND LAYER ================= -->
+    <canvas id="particle-canvas"></canvas>
+    <div class="bg-orb bg-orb-cyan"></div>
+    <div class="bg-orb bg-orb-purple"></div>
+    <div class="bg-orb bg-orb-emerald"></div>
+    <div class="bg-orb bg-orb-amber"></div>
+    <div class="bg-orb bg-orb-rose"></div>
+    <div class="bg-grid-overlay"></div>
+    <div class="bg-noise-overlay"></div>
+
+    <!-- ================= BOOT / SPLASH SCREEN ================= -->
+    <div id="boot-screen">
+        <div class="boot-content">
+            <div class="boot-logo-wrap">
+                <div class="boot-logo-ring ring-1"></div>
+                <div class="boot-logo-ring ring-2"></div>
+                <i class="fa-solid fa-server boot-logo-icon"></i>
+            </div>
+            <h1 class="boot-title">VAULT</h1>
+            <p class="boot-subtitle">Fault-Tolerant Distributed Object Storage Engine</p>
+
+            <div class="boot-log" id="boot-log"></div>
+
+            <div class="boot-progress-track">
+                <div class="boot-progress-fill" id="boot-progress-fill"></div>
+            </div>
+            <div class="boot-progress-row">
+                <span id="boot-progress-label">INITIALIZING CLUSTER…</span>
+                <span id="boot-progress-pct">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= HEADER ================= -->
+    <header class="glass-panel sticky top-0 z-40 border-b border-gray-800 px-4 py-3 scanline-wrap">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20 logo-pulse">
                     <i class="fa-solid fa-server"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="font-bold text-lg tracking-tight text-white font-mono">VAULT <span class="text-cyan-400 font-light text-xs border border-cyan-500/30 px-1.5 py-0.5 rounded bg-cyan-500/10">v3.4-DISTRIBUTED</span></h1>
+                        <h1 class="font-bold text-lg tracking-tight text-white font-mono">VAULT <span class="text-cyan-400 font-light text-xs border border-cyan-500/30 px-1.5 py-0.5 rounded bg-cyan-500/10">v4.0-DISTRIBUTED</span></h1>
                     </div>
                     <p class="text-xs text-gray-400">Fault-Tolerant Distributed Object Storage Engine</p>
                 </div>
             </div>
 
-            <!-- Health Ping & Quick Stats -->
-            <div class="flex items-center gap-6">
+            <!-- Health Ping & Account -->
+            <div class="flex items-center gap-3 flex-wrap">
                 <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-900/80 border border-gray-800 text-xs font-mono">
                     <span class="relative flex h-2.5 w-2.5">
                         <span id="health-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -94,53 +98,103 @@
                     <span id="cluster-quorum-stat" class="text-gray-300">QUORUM: 6/6 NODES</span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <button onclick="triggerUploadModal()" class="px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Object
+                <!-- Account widget -->
+                <div id="account-widget" class="flex items-center gap-2">
+                    <button id="account-login-btn" onclick="openLoginModal()" class="toolbar-btn">
+                        <i class="fa-solid fa-user text-amber-400"></i> Sign In
                     </button>
-                    
-                    <select id="chaos-presets-select" onchange="handleChaosSelect(this.value)" class="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-mono cursor-pointer focus:outline-none">
-                        <option value="" disabled selected>⚡ Inject Chaos Scenario...</option>
-                        <option value="kill-leader">🔥 Kill Active Raft Leader</option>
-                        <option value="partition-az2">🌐 Network Partition AZ-2</option>
-                        <option value="mass-bitrot">☣️ Inject Mass Bit-Rot</option>
-                        <option value="cascading">💥 Trigger Cascading Node Failures</option>
-                        <option value="auto-heal">✨ Trigger Full Auto-Heal Sequence</option>
-                    </select>
+                    <div id="account-chip" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-900/80 border border-gray-800 text-xs font-mono">
+                        <span class="h-6 w-6 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-[10px] font-bold text-black" id="account-avatar-initial">?</span>
+                        <span id="account-name-label" class="text-gray-200"></span>
+                        <button onclick="logoutUser()" class="text-rose-400 hover:text-rose-300 ml-1" title="Log out">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ============ TOOLBAR ROW (all controls equally styled) ============ -->
+        <div class="max-w-7xl mx-auto mt-3 flex flex-wrap items-center gap-2">
+            <div class="search-wrap" data-tour="search-bar">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input id="global-search-input" type="text" placeholder="Search nodes, objects, chunks, tips… ( / )" autocomplete="off"
+                       oninput="vaultSearch.onInput(this.value)" onfocus="vaultSearch.onInput(this.value)">
+                <div id="search-results" class="search-results hidden"></div>
+            </div>
+
+            <button data-tour="btn-upload" onclick="triggerUploadModal()" class="toolbar-btn toolbar-btn-primary">
+                <i class="fa-solid fa-cloud-arrow-up text-cyan-300"></i> Upload Object
+            </button>
+
+            <select id="chaos-presets-select" data-tour="btn-chaos" onchange="handleChaosSelect(this.value)" class="toolbar-btn cursor-pointer">
+                <option value="" disabled selected>⚡ Inject Chaos…</option>
+                <option value="kill-leader">🔥 Kill Active Raft Leader</option>
+                <option value="partition-az2">🌐 Network Partition AZ-2</option>
+                <option value="mass-bitrot">☣️ Inject Mass Bit-Rot</option>
+                <option value="cascading">💥 Trigger Cascading Node Failures</option>
+                <option value="auto-heal">✨ Trigger Full Auto-Heal Sequence</option>
+            </select>
+
+            <button data-tour="btn-tour" onclick="guidedTour.start()" data-tour-pulse class="toolbar-btn">
+                <i class="fa-solid fa-compass text-purple-400"></i> Full Guided Tour
+            </button>
+
+            <button data-tour="btn-screenshot" onclick="vaultTools.takeScreenshot()" class="toolbar-btn">
+                <i class="fa-solid fa-camera text-emerald-400"></i> Screenshot
+            </button>
+
+            <button data-tour="btn-pdf" onclick="vaultTools.generatePdfGuide()" class="toolbar-btn">
+                <i class="fa-solid fa-file-pdf text-rose-400"></i> Download Full Guide (PDF)
+            </button>
+
+            <button data-tour="btn-theme" onclick="vaultTheme.toggle()" class="toolbar-btn">
+                <i class="fa-solid fa-circle-half-stroke text-amber-300" id="theme-toggle-icon"></i> <span id="theme-toggle-label">Dark Mode</span>
+            </button>
+
+            <button data-tour="btn-shortcuts" onclick="openShortcutsModal()" class="toolbar-btn">
+                <i class="fa-solid fa-keyboard text-cyan-300"></i> Shortcuts <kbd class="kbd-chip">?</kbd>
+            </button>
         </div>
     </header>
 
     <nav class="border-b border-gray-800 bg-gray-950/60 px-4">
-        <div class="max-w-7xl mx-auto flex overflow-x-auto gap-2 py-2 no-scrollbar text-xs font-mono">
-            <button id="tab-topology" onclick="switchTab('topology')" class="tab-btn active px-4 py-2 rounded-lg border border-cyan-400 text-cyan-400 bg-gray-900/60 transition-all flex items-center gap-2 whitespace-nowrap">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-start gap-2 py-2.5 text-xs font-mono">
+            <button id="tab-topology" data-tour="tab-topology" onclick="switchTab('topology')" class="tab-btn active px-4 py-2 rounded-lg border border-cyan-400 text-cyan-400 bg-gray-900/60 transition-all flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-network-wired"></i> Cluster Topology & Ring
             </button>
-            <button id="tab-objects" onclick="switchTab('objects')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+            <button id="tab-objects" data-tour="tab-objects" onclick="switchTab('objects')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-cubes"></i> Objects & Shards
             </button>
-            <button id="tab-chaos" onclick="switchTab('chaos')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+            <button id="tab-chaos" data-tour="tab-chaos" onclick="switchTab('chaos')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-skull-crossbones text-rose-400"></i> Chaos Engineering
             </button>
-            <button id="tab-consensus" onclick="switchTab('consensus')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+            <button id="tab-consensus" data-tour="tab-consensus" onclick="switchTab('consensus')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-shield-halved"></i> Consensus & Anti-Entropy
             </button>
-            <button id="tab-explained" onclick="switchTab('explained')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-amber-400/80 hover:text-amber-300 transition-all flex items-center gap-2 whitespace-nowrap">
+            <button id="tab-explained" data-tour="tab-explained" onclick="switchTab('explained')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-amber-400/80 hover:text-amber-300 transition-all flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-graduation-cap"></i> Vault Explained (Class 10)
             </button>
-            <button id="tab-telemetry" onclick="switchTab('telemetry')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+            <button id="tab-calculator" data-tour="tab-calculator" onclick="switchTab('calculator')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-cyan-300/90 hover:text-cyan-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-calculator"></i> Storage Calculator
+            </button>
+            <button id="tab-telemetry" data-tour="tab-telemetry" onclick="switchTab('telemetry')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-chart-line"></i> Telemetry & IOPS
+            </button>
+            <button id="tab-tips" data-tour="tab-tips" onclick="switchTab('tips')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-emerald-300/90 hover:text-emerald-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-lightbulb"></i> Tips & Best Practices
+            </button>
+            <button id="tab-about" data-tour="tab-about" onclick="switchTab('about')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-purple-300/90 hover:text-purple-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-circle-info"></i> About & Team
             </button>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    <main id="capture-root" class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
         <!-- TAB 1: TOPOLOGY & RING VIEW -->
         <section id="view-topology" class="tab-view space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Cluster Nodes Grid (Left 2 cols) -->
                 <div class="lg:col-span-2 space-y-4">
                     <div class="flex items-center justify-between">
                         <h2 class="text-sm font-mono font-bold text-gray-300 flex items-center gap-2">
@@ -153,12 +207,11 @@
                     </div>
                 </div>
 
-                <!-- Consistent Hashing Ring (Right col) -->
-                <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 flex flex-col justify-between">
+                <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 flex flex-col justify-between hover-lift">
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <h3 class="font-mono text-xs font-bold text-cyan-400 flex items-center gap-2">
-                                <i class="fa-solid fa-circle-notch"></i> CONSISTENT HASH RING
+                                <i class="fa-solid fa-circle-notch spin-slow"></i> CONSISTENT HASH RING
                             </h3>
                             <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">N=3 Replicas</span>
                         </div>
@@ -194,7 +247,7 @@
                     </h2>
                     <p class="text-xs text-gray-400">Objects are sharded into chunks, checksummed with SHA-256, and replicated across Quorum N=3.</p>
                 </div>
-                <button onclick="triggerUploadModal()" class="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded-lg transition-all">
+                <button onclick="triggerUploadModal()" class="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                     + Upload New Object
                 </button>
             </div>
@@ -217,46 +270,46 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between hover-lift">
                         <div>
                             <div class="flex items-center gap-2 text-amber-400 font-mono text-xs font-bold">
                                 <i class="fa-solid fa-crown"></i> Kill Raft Leader
                             </div>
                             <p class="text-xs text-gray-400 mt-1">Terminates the active primary node holding the Raft leader lease to trigger instant quorum election.</p>
                         </div>
-                        <button onclick="triggerChaosPreset('kill-leader')" class="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono rounded-lg transition-all">
+                        <button onclick="triggerChaosPreset('kill-leader')" class="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                             Trigger Leader Crash
                         </button>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between hover-lift">
                         <div>
                             <div class="flex items-center gap-2 text-rose-400 font-mono text-xs font-bold">
                                 <i class="fa-solid fa-network-wired"></i> Partition AZ-2 Zone
                             </div>
                             <p class="text-xs text-gray-400 mt-1">Simulates a partial network isolation affecting Node-03 and Node-04 simultaneously.</p>
                         </div>
-                        <button onclick="triggerChaosPreset('partition-az2')" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-mono rounded-lg transition-all">
+                        <button onclick="triggerChaosPreset('partition-az2')" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                             Isolate Availability Zone
                         </button>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between hover-lift">
                         <div>
                             <div class="flex items-center gap-2 text-purple-400 font-mono text-xs font-bold">
                                 <i class="fa-solid fa-biohazard"></i> Inject Silent Bit-Rot
                             </div>
                             <p class="text-xs text-gray-400 mt-1">Corrupts random binary disk chunks without updating state. Watch Merkle trees catch and heal it.</p>
                         </div>
-                        <button onclick="triggerChaosPreset('mass-bitrot')" class="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-mono rounded-lg transition-all">
+                        <button onclick="triggerChaosPreset('mass-bitrot')" class="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                             Corrupt Replicas
                         </button>
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-gray-800 flex justify-between items-center">
+                <div class="pt-4 border-t border-gray-800 flex justify-between items-center flex-wrap gap-3">
                     <span class="text-xs text-gray-400 font-mono">Need to restore full cluster operational state?</span>
-                    <button onclick="triggerChaosPreset('auto-heal')" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold rounded-lg transition-all">
+                    <button onclick="triggerChaosPreset('auto-heal')" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold rounded-lg transition-all ripple-btn">
                         ✨ Run Automatic Recovery & Self-Healing
                     </button>
                 </div>
@@ -266,8 +319,7 @@
         <!-- TAB 4: CONSENSUS & MERKLE TREE VIEW -->
         <section id="view-consensus" class="tab-view hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Raft Consensus Manager -->
-                <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4">
+                <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 hover-lift">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="font-mono text-xs font-bold text-cyan-400 flex items-center gap-2">
                             <i class="fa-solid fa-check-double"></i> RAFT CONSENSUS LOG & STATE MACHINE
@@ -307,14 +359,13 @@
                     </div>
                 </div>
 
-                <!-- Merkle Anti-Entropy Visualizer -->
-                <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 flex flex-col justify-between">
+                <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 flex flex-col justify-between hover-lift">
                     <div>
                         <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 class="font-mono text-xs font-bold text-emerald-400 flex items-center gap-2">
                                 <i class="fa-solid fa-tree"></i> MERKLE TREE ANTI-ENTROPY SYNC
                             </h3>
-                            <button onclick="vaultEngine.merkleEngine.runAntiEntropyCheck()" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] rounded transition-all">
+                            <button onclick="vaultEngine.merkleEngine.runAntiEntropyCheck()" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] rounded transition-all ripple-btn">
                                 Sync Merkle Tree
                             </button>
                         </div>
@@ -353,7 +404,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-cyan-400 font-mono flex items-center gap-2">
                             <i class="fa-solid fa-scissors"></i> 1. Object Sharding (Tearing the Book)
                         </div>
@@ -362,7 +413,7 @@
                         </p>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-emerald-400 font-mono flex items-center gap-2">
                             <i class="fa-solid fa-copy"></i> 2. Quorum Replication (N=3 Safety Copies)
                         </div>
@@ -371,7 +422,7 @@
                         </p>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-purple-400 font-mono flex items-center gap-2">
                             <i class="fa-solid fa-circle-notch"></i> 3. Consistent Hash Ring (Clock Mapping)
                         </div>
@@ -380,7 +431,7 @@
                         </p>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2">
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-rose-400 font-mono flex items-center gap-2">
                             <i class="fa-solid fa-fingerprint"></i> 4. Bit-Rot Detection & Merkle Trees
                         </div>
@@ -388,13 +439,187 @@
                             Over time, physical computer hard drives age and flip random 0s and 1s (<span class="text-rose-300 font-mono">Bit-Rot</span>). Vault checks SHA-256 digital fingerprints every few seconds to catch and repair silent corruption automatically.
                         </p>
                     </div>
+
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
+                        <div class="font-bold text-amber-400 font-mono flex items-center gap-2">
+                            <i class="fa-solid fa-scale-balanced"></i> 5. Quorum Formula: R + W &gt; N
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            <span class="text-amber-300 font-mono">R</span> = nodes contacted on read, <span class="text-amber-300 font-mono">W</span> = nodes contacted on write, <span class="text-amber-300 font-mono">N</span> = total replicas. If R + W is greater than N, every read is guaranteed to overlap the latest write — that overlap is what makes the data "strongly consistent". Try it yourself in the Storage Calculator tab.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
+                        <div class="font-bold text-cyan-400 font-mono flex items-center gap-2">
+                            <i class="fa-solid fa-puzzle-piece"></i> 6. Erasure Coding (Cheaper Than N=3)
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            Instead of 3 full copies, split data into <span class="text-cyan-300 font-mono">k</span> data pieces plus <span class="text-cyan-300 font-mono">m</span> parity pieces (like a Sudoku checksum row). Any <span class="text-cyan-300 font-mono">k</span> of the <span class="text-cyan-300 font-mono">k+m</span> pieces can rebuild the original — far less storage overhead than full replication, at the cost of extra CPU work to rebuild.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
+                        <div class="font-bold text-emerald-400 font-mono flex items-center gap-2">
+                            <i class="fa-solid fa-comments"></i> 7. Gossip Protocols & Membership
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            Nodes don't rely on one central "phone book". Instead, each node randomly tells a few peers what it knows ("gossips"), and that knowledge spreads through the whole cluster in <span class="text-emerald-300 font-mono">O(log N)</span> rounds — the same trick that makes a rumor spread through a school in a single day.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
+                        <div class="font-bold text-purple-400 font-mono flex items-center gap-2">
+                            <i class="fa-solid fa-scale-unbalanced"></i> 8. CAP Theorem
+                        </div>
+                        <p class="text-gray-300 leading-relaxed">
+                            During a network split you can only fully keep two of three promises: <span class="text-purple-300 font-mono">Consistency</span>, <span class="text-purple-300 font-mono">Availability</span>, and <span class="text-purple-300 font-mono">Partition tolerance</span>. Since real networks do split, Vault leans on Raft to stay strongly consistent for committed writes, while replication keeps it highly available for reads.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <div class="p-3 bg-gray-900/80 rounded-xl border border-gray-800 text-center">
+                        <span class="block text-lg font-bold text-cyan-400 font-mono">64 MB</span>
+                        <p class="text-[10px] font-mono text-gray-400 mt-1">Default Chunk Size</p>
+                    </div>
+                    <div class="p-3 bg-gray-900/80 rounded-xl border border-gray-800 text-center">
+                        <span class="block text-lg font-bold text-emerald-400 font-mono">SHA-256</span>
+                        <p class="text-[10px] font-mono text-gray-400 mt-1">Checksum Algorithm</p>
+                    </div>
+                    <div class="p-3 bg-gray-900/80 rounded-xl border border-gray-800 text-center">
+                        <span class="block text-lg font-bold text-purple-400 font-mono">360°</span>
+                        <p class="text-[10px] font-mono text-gray-400 mt-1">Hash Ring Key Space</p>
+                    </div>
+                    <div class="p-3 bg-gray-900/80 rounded-xl border border-gray-800 text-center">
+                        <span class="block text-lg font-bold text-amber-400 font-mono">O(log N)</span>
+                        <p class="text-[10px] font-mono text-gray-400 mt-1">Merkle Verify Time</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: STORAGE & REPLICATION CALCULATOR -->
+        <section id="view-calculator" class="tab-view hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 border border-cyan-500/20 space-y-5 hover-lift">
+                <div>
+                    <h2 class="text-base font-mono font-bold text-cyan-300 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator"></i> STORAGE, QUORUM & ERASURE-CODING CALCULATOR
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Plug in your own numbers and see exactly how replication factor, quorum size, and erasure coding trade storage cost for fault tolerance — the same math real systems like Amazon S3, Cassandra, and Ceph run under the hood.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    <!-- INPUTS -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="calc-input-label">DATASET SIZE (GB)</label>
+                                <input type="number" id="calc-data-size" value="500" min="1" class="calc-input" oninput="vaultCalc.update()">
+                            </div>
+                            <div>
+                                <label class="calc-input-label">STORAGE NODES</label>
+                                <input type="number" id="calc-node-count" value="6" min="1" max="64" class="calc-input" oninput="vaultCalc.update()">
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 space-y-3">
+                            <span class="text-[10px] font-mono text-gray-400 block">REPLICATION MODEL</span>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="calc-input-label">REPLICAS (N)</label>
+                                    <input type="number" id="calc-n" value="3" min="1" max="9" class="calc-input" oninput="vaultCalc.update()">
+                                </div>
+                                <div>
+                                    <label class="calc-input-label">READ QUORUM (R)</label>
+                                    <input type="number" id="calc-r" value="2" min="1" max="9" class="calc-input" oninput="vaultCalc.update()">
+                                </div>
+                                <div>
+                                    <label class="calc-input-label">WRITE QUORUM (W)</label>
+                                    <input type="number" id="calc-w" value="2" min="1" max="9" class="calc-input" oninput="vaultCalc.update()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 space-y-3">
+                            <span class="text-[10px] font-mono text-gray-400 block">ERASURE CODING MODEL (k data + m parity shards)</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="calc-input-label">DATA SHARDS (k)</label>
+                                    <input type="number" id="calc-ec-k" value="4" min="1" max="20" class="calc-input" oninput="vaultCalc.update()">
+                                </div>
+                                <div>
+                                    <label class="calc-input-label">PARITY SHARDS (m)</label>
+                                    <input type="number" id="calc-ec-m" value="2" min="1" max="20" class="calc-input" oninput="vaultCalc.update()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RESULTS -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="calc-result-tile">
+                                <span class="calc-result-label">REPLICATION STORAGE NEEDED</span>
+                                <span id="calc-out-raw-storage" class="calc-result-value text-cyan-400">1,500 GB</span>
+                            </div>
+                            <div class="calc-result-tile">
+                                <span class="calc-result-label">AVG PER-NODE STORAGE</span>
+                                <span id="calc-out-per-node" class="calc-result-value text-purple-400">250 GB</span>
+                            </div>
+                            <div class="calc-result-tile">
+                                <span class="calc-result-label">TOLERABLE NODE FAILURES</span>
+                                <span id="calc-out-max-fail" class="calc-result-value text-emerald-400">2 nodes</span>
+                            </div>
+                            <div class="calc-result-tile">
+                                <span class="calc-result-label">CONSISTENCY (R+W vs N)</span>
+                                <span id="calc-out-consistency" class="calc-status-pill calc-status-ok">STRONG (4 &gt; 3)</span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 space-y-2">
+                            <div class="flex justify-between items-center text-[11px] font-mono">
+                                <span class="text-gray-400">Replication overhead</span>
+                                <span id="calc-out-repl-pct" class="text-cyan-400 font-bold">200%</span>
+                            </div>
+                            <div class="calc-bar-row">
+                                <div class="calc-bar-track"><div id="calc-bar-repl" class="calc-bar-fill bar-cyan"></div></div>
+                            </div>
+
+                            <div class="flex justify-between items-center text-[11px] font-mono pt-2">
+                                <span class="text-gray-400">Erasure coding overhead</span>
+                                <span id="calc-out-ec-pct" class="text-purple-400 font-bold">50%</span>
+                            </div>
+                            <div class="calc-bar-row">
+                                <div class="calc-bar-track"><div id="calc-bar-ec" class="calc-bar-fill bar-purple"></div></div>
+                            </div>
+                            <p class="text-[10.5px] text-gray-500 pt-1">Bars are scaled to a 300% overhead ceiling so both models compare on the same axis.</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="calc-result-tile">
+                                <span class="calc-result-label">EC STORAGE NEEDED</span>
+                                <span id="calc-out-ec-storage" class="calc-result-value text-purple-400">750 GB</span>
+                            </div>
+                            <div class="calc-result-tile">
+                                <span class="calc-result-label">EC FAULT TOLERANCE</span>
+                                <span id="calc-out-ec-fault" class="calc-result-value text-emerald-400">2 shards</span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-cyan-500/5 rounded-xl border border-cyan-500/20 text-[11px] text-gray-300">
+                            <span id="calc-out-summary">Full replication uses more disk but rebuilds instantly from a single healthy copy. Erasure coding uses less disk but needs CPU time to reconstruct from parity when a node fails — a classic space-vs-compute trade-off.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- TAB 6: TELEMETRY & IOPS VIEW -->
         <section id="view-telemetry" class="tab-view hidden space-y-6">
-            <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4">
+            <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 hover-lift">
                 <div class="flex items-center justify-between">
                     <h3 class="font-mono text-xs font-bold text-cyan-400 flex items-center gap-2">
                         <i class="fa-solid fa-chart-area"></i> REAL-TIME CLUSTER METRICS & THROUGHPUT
@@ -427,9 +652,189 @@
             </div>
         </section>
 
+        <!-- TAB 7: TIPS & BEST PRACTICES -->
+        <section id="view-tips" class="tab-view hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 border border-emerald-500/20 space-y-4">
+                <h2 class="text-base font-mono font-bold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb"></i> TIPS & BEST PRACTICES
+                </h2>
+                <p class="text-xs text-gray-400">Practical tips for exploring Vault, plus real distributed-systems best practices behind the simulation.</p>
+                <div id="tips-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 8: ABOUT & TEAM VIEW -->
+        <section id="view-about" class="tab-view hidden space-y-8">
+
+            <div class="about-hero glass-panel rounded-3xl p-7 md:p-9 border border-purple-500/25 space-y-5 hover-lift">
+                <div class="about-hero-icon">
+                    <i class="fa-solid fa-server"></i>
+                </div>
+                <span class="about-eyebrow"><i class="fa-solid fa-sparkles"></i> ABOUT THIS PROJECT</span>
+                <h2 class="about-hero-title">Distributed systems, made <span class="about-hero-title-accent">tangible</span></h2>
+                <p class="text-sm text-gray-300 leading-relaxed max-w-3xl">
+                    Vault is an interactive simulation of a fault-tolerant, distributed object storage system. It exists to make
+                    distributed-systems ideas tangible instead of abstract — sharding, quorum replication, consistent hashing,
+                    Raft consensus, and Merkle-tree anti-entropy — all running live in the browser.
+                </p>
+                <p class="text-sm text-gray-300 leading-relaxed max-w-3xl">
+                    Kill a node, partition an availability zone, or inject silent bit-rot from the Chaos Engineering tab, and
+                    watch the cluster detect the fault and repair itself in real time. The goal is simple: turn concepts that
+                    usually live in textbooks and whiteboards into something you can click, break, and watch heal.
+                </p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <div class="about-feature-tile hover-lift">
+                        <i class="fa-solid fa-cubes text-cyan-400 mb-1"></i>
+                        <p class="text-[10px] font-mono text-gray-400">Sharding & Replication</p>
+                    </div>
+                    <div class="about-feature-tile hover-lift">
+                        <i class="fa-solid fa-circle-notch text-purple-400 mb-1"></i>
+                        <p class="text-[10px] font-mono text-gray-400">Consistent Hashing</p>
+                    </div>
+                    <div class="about-feature-tile hover-lift">
+                        <i class="fa-solid fa-shield-halved text-emerald-400 mb-1"></i>
+                        <p class="text-[10px] font-mono text-gray-400">Raft Consensus</p>
+                    </div>
+                    <div class="about-feature-tile hover-lift">
+                        <i class="fa-solid fa-skull-crossbones text-rose-400 mb-1"></i>
+                        <p class="text-[10px] font-mono text-gray-400">Chaos Engineering</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-5">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <h2 class="text-base font-mono font-bold text-gray-200 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-cyan-400"></i> THE TEAM BEHIND VAULT
+                    </h2>
+                    <span class="team-count-badge"><i class="fa-solid fa-user-group"></i> 3 Engineers &middot; LPU</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- Developer 1: Aryan Das -->
+                    <div class="dev-card">
+                        <div class="dev-card-glow dev-glow-cyan"></div>
+                        <div class="dev-card-topbar dev-topbar-cyan"></div>
+                        <div class="relative z-10 flex flex-col items-center text-center h-full">
+                            <div class="dev-avatar-ring dev-ring-cyan">
+                                <div class="dev-avatar-wrap">
+                                    <img class="dev-avatar-img" alt="Aryan Das"
+                                         src="WhatsApp Image 2026-09-26 at 3.43.02 AM.jpeg"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="dev-avatar dev-avatar-cyan" style="display:none;">AD</div>
+                                </div>
+                                <span class="dev-avatar-badge dev-badge-cyan" title="Core Engineer"><i class="fa-solid fa-code"></i></span>
+                            </div>
+                            <h3 class="dev-name">Aryan Das</h3>
+                            <span class="dev-role-pill dev-role-cyan"><i class="fa-solid fa-crown"></i> Core Systems Engineer</span>
+                            <p class="dev-university"><i class="fa-solid fa-graduation-cap"></i> B.Tech CSE &middot; Lovely Professional University</p>
+                            <p class="dev-bio">
+                                Aryan designed and built Vault's core simulation engine — the consistent hash ring, Raft
+                                consensus manager, and Merkle-tree anti-entropy logic that power the whole cluster.
+                            </p>
+                            <div class="flex flex-wrap gap-1.5 justify-center my-4">
+                                <span class="skill-chip">HTML</span>
+                                <span class="skill-chip">CSS</span>
+                                <span class="skill-chip">JavaScript</span>
+                                <span class="skill-chip">Python</span>
+                                <span class="skill-chip">PHP</span>
+                                <span class="skill-chip">SQL</span>
+                            </div>
+                            <div class="flex gap-2 pt-4 border-t border-gray-800 w-full mt-auto">
+                                <a href="https://in.linkedin.com/in/aryandas-iit" target="_blank" rel="noopener noreferrer" class="social-btn social-linkedin">
+                                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                                </a>
+                                <a href="https://github.com/AryanDas20" target="_blank" rel="noopener noreferrer" class="social-btn social-github">
+                                    <i class="fa-brands fa-github"></i> GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Developer 2: Pranay Kathpaul -->
+                    <div class="dev-card">
+                        <div class="dev-card-glow dev-glow-emerald"></div>
+                        <div class="dev-card-topbar dev-topbar-emerald"></div>
+                        <div class="relative z-10 flex flex-col items-center text-center h-full">
+                            <div class="dev-avatar-ring dev-ring-emerald">
+                                <div class="dev-avatar-wrap">
+                                    <img class="dev-avatar-img" alt="Pranay Kathpaul"
+                                         src="WhatsApp Image 2026-09-26 at 3.41.05 AM.jpeg"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="dev-avatar dev-avatar-emerald" style="display:none;">PK</div>
+                                </div>
+                                <span class="dev-avatar-badge dev-badge-emerald" title="Interface Engineer"><i class="fa-solid fa-layer-group"></i></span>
+                            </div>
+                            <h3 class="dev-name">Pranay Kathpaul</h3>
+                            <span class="dev-role-pill dev-role-emerald"><i class="fa-solid fa-palette"></i> Interface & Interactions</span>
+                            <p class="dev-university"><i class="fa-solid fa-graduation-cap"></i> B.Tech CSE &middot; Lovely Professional University</p>
+                            <p class="dev-bio">
+                                Pranay contributed to Vault's interface and interactive features, helping shape how the
+                                cluster's real-time state and chaos events come to life on screen.
+                            </p>
+                            <div class="flex flex-wrap gap-1.5 justify-center my-4">
+                                <span class="skill-chip">HTML</span>
+                                <span class="skill-chip">CSS</span>
+                                <span class="skill-chip">JavaScript</span>
+                            </div>
+                            <div class="flex gap-2 pt-4 border-t border-gray-800 w-full mt-auto">
+                                <a href="https://www.linkedin.com/in/pranay-kathpaul-633600407/" target="_blank" rel="noopener noreferrer" class="social-btn social-linkedin">
+                                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                                </a>
+                                <a href="https://github.com/pranaykathpaul2008-ctrl" target="_blank" rel="noopener noreferrer" class="social-btn social-github">
+                                    <i class="fa-brands fa-github"></i> GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Developer 3: Chandan Singh -->
+                    <div class="dev-card">
+                        <div class="dev-card-glow dev-glow-purple"></div>
+                        <div class="dev-card-topbar dev-topbar-purple"></div>
+                        <div class="relative z-10 flex flex-col items-center text-center h-full">
+                            <div class="dev-avatar-ring dev-ring-purple">
+                                <div class="dev-avatar-wrap">
+                                    <img class="dev-avatar-img" alt="Chandan Singh"
+                                         src="WhatsApp Image 2026-09-26 at 3.43.14 AM.jpeg"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="dev-avatar dev-avatar-purple" style="display:none;">CS</div>
+                                </div>
+                                <span class="dev-avatar-badge dev-badge-purple" title="Chaos & Telemetry"><i class="fa-solid fa-bolt"></i></span>
+                            </div>
+                            <h3 class="dev-name">Chandan Singh</h3>
+                            <span class="dev-role-pill dev-role-purple"><i class="fa-solid fa-skull-crossbones"></i> Chaos & Telemetry</span>
+                            <p class="dev-university"><i class="fa-solid fa-graduation-cap"></i> B.Tech CSE &middot; Lovely Professional University</p>
+                            <p class="dev-bio">
+                                Chandan worked on Vault's chaos-engineering and telemetry tooling, helping simulate
+                                real-world failure scenarios and visualize the cluster's health under stress.
+                            </p>
+                            <div class="flex flex-wrap gap-1.5 justify-center my-4">
+                                <span class="skill-chip">HTML</span>
+                                <span class="skill-chip">CSS</span>
+                                <span class="skill-chip">JavaScript</span>
+                            </div>
+                            <div class="flex gap-2 pt-4 border-t border-gray-800 w-full mt-auto">
+                                <span class="social-btn social-linkedin disabled" role="button" aria-disabled="true" title="Profile unavailable">
+                                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                                </span>
+                                <a href="https://github.com/Chandan77480" target="_blank" rel="noopener noreferrer" class="social-btn social-github">
+                                    <i class="fa-brands fa-github"></i> GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <footer class="glass-panel border-t border-gray-800 z-30">
+    <footer class="glass-panel border-t border-gray-800 z-30 relative">
         <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between font-mono text-xs border-b border-gray-800/60">
             <div class="flex items-center gap-2 text-cyan-400">
                 <i class="fa-solid fa-terminal text-xs"></i>
@@ -448,8 +853,9 @@
         </div>
     </footer>
 
+    <!-- ================= UPLOAD MODAL ================= -->
     <div id="upload-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
-        <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-cyan-500/30 space-y-5 relative">
+        <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-cyan-500/30 space-y-5 relative modal-pop">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3">
                 <h3 class="font-mono text-sm font-bold text-cyan-400 flex items-center gap-2">
                     <i class="fa-solid fa-cloud-arrow-up"></i> UPLOAD OBJECT TO CLUSTER
@@ -477,674 +883,60 @@
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-800">
-                <button onclick="triggerFileInput()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-mono text-xs rounded-lg transition-all">
+                <button onclick="triggerFileInput()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-mono text-xs rounded-lg transition-all ripple-btn">
                     Browse Local File
                 </button>
-                <button onclick="submitModalUpload()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-cyan-500/20 transition-all">
+                <button onclick="submitModalUpload()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-cyan-500/20 transition-all ripple-btn">
                     Commit to Vault Cluster
                 </button>
             </div>
         </div>
     </div>
 
-    <script>
-        // Utility Functions
-        function simpleHash(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
-        }
-
-        function generateHashHex(seed) {
-            const hex = '0123456789abcdef';
-            let res = '';
-            for(let i = 0; i < 12; i++) {
-                res += hex[Math.floor(Math.abs(Math.sin(seed + i)) * 16)];
-            }
-            return res;
-        }
-
-        class ConsistentHashRing {
-            constructor(replicas = 3) {
-                this.replicas = replicas;
-                this.ring = new Map();
-                this.keys = [];
-            }
-
-            addNode(nodeId) {
-                for (let i = 0; i < this.replicas; i++) {
-                    const vnodeKey = `${nodeId}-vnode-${i}`;
-                    const hash = simpleHash(vnodeKey) % 360;
-                    this.ring.set(hash, nodeId);
-                    this.keys.push(hash);
-                }
-                this.keys.sort((a, b) => a - b);
-            }
-
-            removeNode(nodeId) {
-                for (let i = 0; i < this.replicas; i++) {
-                    const vnodeKey = `${nodeId}-vnode-${i}`;
-                    const hash = simpleHash(vnodeKey) % 360;
-                    this.ring.delete(hash);
-                }
-                this.keys = this.keys.filter(k => this.ring.has(k));
-            }
-
-            getNodesForObject(objectKey, count = 3) {
-                if (this.keys.length === 0) return [];
-                const hash = simpleHash(objectKey) % 360;
-                const nodes = new Set();
-                let startIndex = this.keys.findIndex(k => k >= hash);
-                if (startIndex === -1) startIndex = 0;
-
-                for (let i = 0; i < this.keys.length && nodes.size < count; i++) {
-                    const idx = (startIndex + i) % this.keys.length;
-                    nodes.add(this.ring.get(this.keys[idx]));
-                }
-                return Array.from(nodes);
-            }
-        }
-
-        class RaftConsensusManager {
-            constructor(cluster) {
-                this.cluster = cluster;
-                this.term = 14;
-                this.leader = 'Node-01';
-                this.commitIndex = 1048;
-                this.logs = [
-                    { index: 1046, term: 14, cmd: 'PUT chunk_0x8f3a (N1, N2, N3)' },
-                    { index: 1047, term: 14, cmd: 'HEARTBEAT quorum state sync ok' },
-                    { index: 1048, term: 14, cmd: 'COMMIT ai-model-weights-v2.bin' }
-                ];
-            }
-
-            triggerElection() {
-                this.term++;
-                const healthyNodes = this.cluster.nodes.filter(n => n.status === 'Healthy');
-                if (healthyNodes.length === 0) {
-                    this.leader = 'NONE (NO QUORUM)';
-                    vaultEngine.logEvent('ERROR', 'RAFT', `Election failed! No healthy nodes in cluster.`);
-                    return;
-                }
-                const randomLeader = healthyNodes[Math.floor(Math.random() * healthyNodes.length)].id;
-                this.leader = randomLeader;
-                this.logs.push({
-                    index: ++this.commitIndex,
-                    term: this.term,
-                    cmd: `LEADER_ELECTION ${randomLeader} elected for term ${this.term}`
-                });
-                vaultEngine.logEvent('WARN', 'RAFT', `Leader election triggered! ${randomLeader} won Term ${this.term}`);
-                this.updateUI();
-            }
-
-            updateUI() {
-                const leaderBadge = document.getElementById('raft-leader-badge');
-                if (leaderBadge) {
-                    leaderBadge.innerHTML = `<i class="fa-solid fa-crown text-amber-400 text-[10px]"></i> ${this.leader}`;
-                }
-
-                const termElem = document.getElementById('raft-term-val');
-                const leaderElem = document.getElementById('raft-leader-val');
-                const commitElem = document.getElementById('raft-commit-val');
-
-                if (termElem) termElem.innerText = `Term ${this.term}`;
-                if (leaderElem) leaderElem.innerText = this.leader;
-                if (commitElem) commitElem.innerText = `#${this.commitIndex}`;
-
-                const rolesContainer = document.getElementById('raft-nodes-roles');
-                if (rolesContainer) {
-                    rolesContainer.innerHTML = this.cluster.nodes.map(n => {
-                        let role = n.id === this.leader ? 'LEADER' : (n.status === 'Dead' ? 'OFFLINE' : 'FOLLOWER');
-                        let badgeColor = role === 'LEADER' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : (role === 'OFFLINE' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-gray-800 text-gray-400 border-gray-700');
-                        return `<div class="p-2 rounded-xl border ${badgeColor} flex justify-between items-center">
-                            <span>${n.id}</span>
-                            <span class="font-bold text-[10px]">${role}</span>
-                        </div>`;
-                    }).join('');
-                }
-
-                const logsContainer = document.getElementById('raft-log-entries');
-                if (logsContainer) {
-                    logsContainer.innerHTML = this.logs.slice(-6).reverse().map(l => `
-                        <div class="flex items-center justify-between text-gray-300">
-                            <span><span class="text-cyan-400">#${l.index}</span> [Term ${l.term}] ${l.cmd}</span>
-                            <span class="text-emerald-400 text-[10px]">COMMITTED</span>
-                        </div>
-                    `).join('');
-                }
-            }
-        }
-
-        class MerkleTreeEngine {
-            constructor(cluster) {
-                this.cluster = cluster;
-            }
-
-            runAntiEntropyCheck() {
-                vaultEngine.logEvent('INFO', 'ANTI-ENTROPY', 'Initiating Merkle Tree verification across replicas...');
-                
-                let corruptedFound = false;
-                this.cluster.objects.forEach(obj => {
-                    obj.chunks.forEach(chunk => {
-                        if (chunk.corrupted) {
-                            corruptedFound = true;
-                            vaultEngine.logEvent('ERROR', 'BIT-ROT', `Merkle hash mismatch detected for ${chunk.id}! Reconstructing from healthy replicas...`);
-                            setTimeout(() => {
-                                chunk.corrupted = false;
-                                vaultEngine.logEvent('SUCCESS', 'SELF-HEAL', `Successfully auto-repaired ${chunk.id} checksum match restored.`);
-                                vaultEngine.updateAllViews();
-                            }, 1200);
-                        }
-                    });
-                });
-
-                if (!corruptedFound) {
-                    vaultEngine.logEvent('SUCCESS', 'ANTI-ENTROPY', 'Merkle Tree hash check complete. All replicas 100% consistent.');
-                }
-                this.renderMerkleGraphic();
-            }
-
-            renderMerkleGraphic() {
-                const container = document.getElementById('merkle-tree-graphic');
-                if (!container) return;
-
-                const rootHash = generateHashHex(42);
-                const leftChild = generateHashHex(12);
-                const rightChild = generateHashHex(88);
-
-                container.innerHTML = `
-                    <div class="text-center">
-                        <span class="text-gray-500 text-[10px]">ROOT MERKLE HASH</span>
-                        <div class="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded inline-block font-bold mt-0.5">
-                            0x${rootHash}
-                        </div>
-                    </div>
-                    <div class="flex justify-around items-center pt-2 border-t border-gray-800">
-                        <div class="text-center">
-                            <span class="text-gray-500 text-[10px]">Leaf Range 0x00-0x7F</span>
-                            <div class="px-2 py-0.5 bg-gray-900 text-gray-300 border border-gray-700 rounded mt-0.5">
-                                0x${leftChild}
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <span class="text-gray-500 text-[10px]">Leaf Range 0x80-0xFF</span>
-                            <div class="px-2 py-0.5 bg-gray-900 text-gray-300 border border-gray-700 rounded mt-0.5">
-                                0x${rightChild}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        class VaultClusterEngine {
-            constructor() {
-                this.nodes = [
-                    { id: 'Node-01', az: 'AZ-1', status: 'Healthy', cpu: 28, storage: 42, activeChunks: 18 },
-                    { id: 'Node-02', az: 'AZ-1', status: 'Healthy', cpu: 34, storage: 51, activeChunks: 22 },
-                    { id: 'Node-03', az: 'AZ-2', status: 'Healthy', cpu: 19, storage: 38, activeChunks: 16 },
-                    { id: 'Node-04', az: 'AZ-2', status: 'Healthy', cpu: 45, storage: 64, activeChunks: 28 },
-                    { id: 'Node-05', az: 'AZ-3', status: 'Healthy', cpu: 22, storage: 30, activeChunks: 14 },
-                    { id: 'Node-06', az: 'AZ-3', status: 'Healthy', cpu: 31, storage: 48, activeChunks: 20 }
-                ];
-
-                this.hashRing = new ConsistentHashRing(3);
-                this.nodes.forEach(n => this.hashRing.addNode(n.id));
-
-                this.objects = [
-                    {
-                        name: 'ai-model-weights-v2.bin',
-                        size: 256,
-                        chunks: [
-                            { id: 'chk-01', hash: '8f3a92b', primaryNode: 'Node-01', replicaNodes: ['Node-02', 'Node-03'], corrupted: false },
-                            { id: 'chk-02', hash: '4c7e10d', primaryNode: 'Node-04', replicaNodes: ['Node-05', 'Node-06'], corrupted: false },
-                            { id: 'chk-03', hash: '9b2e11a', primaryNode: 'Node-02', replicaNodes: ['Node-03', 'Node-05'], corrupted: false },
-                            { id: 'chk-04', hash: '1d6f44e', primaryNode: 'Node-06', replicaNodes: ['Node-01', 'Node-04'], corrupted: false }
-                        ]
-                    },
-                    {
-                        name: 'customer-database.dump',
-                        size: 128,
-                        chunks: [
-                            { id: 'chk-05', hash: '7e2c91a', primaryNode: 'Node-03', replicaNodes: ['Node-04', 'Node-01'], corrupted: false },
-                            { id: 'chk-06', hash: '3a1d82f', primaryNode: 'Node-05', replicaNodes: ['Node-06', 'Node-02'], corrupted: false }
-                        ]
-                    }
-                ];
-
-                this.telemetryHistory = Array(20).fill(14200);
-
-                this.raft = new RaftConsensusManager(this);
-                this.merkleEngine = new MerkleTreeEngine(this);
-
-                this.initHeartbeatLoop();
-            }
-
-            initHeartbeatLoop() {
-                setInterval(() => {
-                    this.nodes.forEach(n => {
-                        if (n.status === 'Healthy') {
-                            n.cpu = Math.min(95, Math.max(10, n.cpu + Math.floor(Math.random() * 7 - 3)));
-                        }
-                    });
-
-                    const newIops = 14000 + Math.floor(Math.random() * 800 - 400);
-                    this.telemetryHistory.shift();
-                    this.telemetryHistory.push(newIops);
-
-                    if (Math.random() > 0.7) {
-                        const healthyCount = this.nodes.filter(n => n.status === 'Healthy').length;
-                        this.logEvent('DEBUG', 'gRPC', `Heartbeat ACK received from ${healthyCount}/6 storage nodes`);
-                    }
-
-                    this.updateUI();
-                    this.renderTelemetryChart();
-                }, 2500);
-            }
-
-            logEvent(level, subsystem, msg) {
-                const terminal = document.getElementById('terminal-drawer');
-                if (!terminal) return;
-
-                const time = new Date().toISOString().split('T')[1].slice(0, 8);
-                let colorClass = 'text-cyan-400';
-                if (level === 'WARN') colorClass = 'text-amber-400';
-                if (level === 'ERROR') colorClass = 'text-rose-400';
-                if (level === 'SUCCESS') colorClass = 'text-emerald-400';
-
-                const line = document.createElement('div');
-                line.className = 'flex items-start gap-2 font-mono text-[11px] hover:bg-gray-900/50 p-0.5 rounded';
-                line.innerHTML = `
-                    <span class="text-gray-500 font-mono">[${time}]</span>
-                    <span class="${colorClass} font-bold">[${subsystem}]</span>
-                    <span class="text-gray-300 flex-1">${msg}</span>
-                `;
-
-                terminal.appendChild(line);
-                terminal.scrollTop = terminal.scrollHeight;
-            }
-
-            toggleNodeStatus(nodeId) {
-                const node = this.nodes.find(n => n.id === nodeId);
-                if (!node) return;
-
-                if (node.status === 'Healthy') {
-                    node.status = 'Dead';
-                    node.cpu = 0;
-                    this.hashRing.removeNode(nodeId);
-                    this.logEvent('ERROR', 'NODE-CRASH', `Node ${nodeId} (${node.az}) CRASHED! Re-routing ring key ranges...`);
-                    
-                    if (this.raft.leader === nodeId) {
-                        this.raft.triggerElection();
-                    }
-                } else {
-                    node.status = 'Healthy';
-                    node.cpu = 25;
-                    this.hashRing.addNode(nodeId);
-                    this.logEvent('SUCCESS', 'RECOVER', `Node ${nodeId} back online. Triggering Merkle Tree anti-entropy sync...`);
-                    this.merkleEngine.runAntiEntropyCheck();
-                }
-
-                this.updateAllViews();
-            }
-
-            injectBitRot(chunkId) {
-                let targetChunk = null;
-                this.objects.forEach(o => {
-                    o.chunks.forEach(c => {
-                        if (c.id === chunkId) targetChunk = c;
-                    });
-                });
-
-                if (targetChunk) {
-                    targetChunk.corrupted = true;
-                    this.logEvent('ERROR', 'BIT-ROT', `Silent bit-rot injected into ${chunkId}! Checksum hash modified on disk.`);
-                    this.updateAllViews();
-                }
-            }
-
-            updateAllViews() {
-                this.renderNodeCards();
-                this.renderObjectsList();
-                this.drawHashRing();
-                this.raft.updateUI();
-                this.merkleEngine.renderMerkleGraphic();
-                this.updateHeaderStats();
-            }
-
-            updateUI() {
-                this.renderNodeCards();
-                this.drawHashRing();
-            }
-
-            updateHeaderStats() {
-                const healthyCount = this.nodes.filter(n => n.status === 'Healthy').length;
-                const quorumElem = document.getElementById('cluster-quorum-stat');
-                const statusText = document.getElementById('system-status-text');
-                const ping = document.getElementById('health-ping');
-                const dot = document.getElementById('health-dot');
-
-                if (quorumElem) quorumElem.innerText = `QUORUM: ${healthyCount}/6 NODES`;
-
-                if (healthyCount >= 4) {
-                    statusText.innerText = `${((healthyCount / 6) * 100).toFixed(1)}% HEALTHY`;
-                    statusText.className = 'text-emerald-400 font-mono font-bold';
-                    ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
-                    dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-emerald-500';
-                } else {
-                    statusText.innerText = 'QUORUM DEGRADED';
-                    statusText.className = 'text-rose-400 font-mono font-bold';
-                    ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75';
-                    dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-rose-500';
-                }
-            }
-
-            renderNodeCards() {
-                const container = document.getElementById('nodes-grid');
-                if (!container) return;
-
-                container.innerHTML = this.nodes.map(n => {
-                    const isDead = n.status === 'Dead';
-                    const statusColor = isDead ? 'text-rose-400 border-rose-500/30 bg-rose-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
-                    const isLeader = this.raft.leader === n.id;
-
-                    return `
-                        <div class="glass-card rounded-xl p-4 border border-gray-800 flex flex-col justify-between space-y-3 relative overflow-hidden transition-all ${isDead ? 'opacity-50' : ''}">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold font-mono text-sm text-gray-200">${n.id}</span>
-                                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700">${n.az}</span>
-                                    ${isLeader ? '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold"><i class="fa-solid fa-crown text-[9px]"></i> LEADER</span>' : ''}
-                                </div>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${statusColor}">${n.status}</span>
-                            </div>
-
-                            <div class="space-y-2 font-mono text-[11px]">
-                                <div>
-                                    <div class="flex justify-between text-gray-400 mb-0.5">
-                                        <span>CPU LOAD</span>
-                                        <span class="text-gray-200">${n.cpu}%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
-                                        <div class="bg-cyan-500 h-1.5 rounded-full" style="width: ${n.cpu}%"></div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="flex justify-between text-gray-400 mb-0.5">
-                                        <span>STORAGE UTIL</span>
-                                        <span class="text-gray-200">${n.storage}%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
-                                        <div class="bg-purple-500 h-1.5 rounded-full" style="width: ${n.storage}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="pt-2 border-t border-gray-800 flex items-center justify-between text-xs font-mono">
-                                <span class="text-gray-500 text-[10px]">${n.activeChunks} Chunks Stored</span>
-                                <button onclick="vaultEngine.toggleNodeStatus('${n.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-[11px] text-gray-300 transition-all">
-                                    ${isDead ? '<i class="fa-solid fa-power-off text-emerald-400"></i> Start' : '<i class="fa-solid fa-skull text-rose-400"></i> Kill'}
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            renderObjectsList() {
-                const container = document.getElementById('objects-list-container');
-                if (!container) return;
-
-                container.innerHTML = this.objects.map(obj => `
-                    <div class="glass-card rounded-xl p-4 border border-gray-800 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-file-code text-cyan-400 text-lg"></i>
-                                <div>
-                                    <span class="font-bold font-mono text-xs text-gray-200 block">${obj.name}</span>
-                                    <span class="text-[10px] font-mono text-gray-400">${obj.size} MB | ${obj.chunks.length} Chunks</span>
-                                </div>
-                            </div>
-                            <span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">N=3 Replicated</span>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
-                            ${obj.chunks.map(c => `
-                                <div class="bg-gray-900/80 p-2.5 rounded-xl border ${c.corrupted ? 'border-rose-500/50 bg-rose-950/20' : 'border-gray-800'} space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-bold ${c.corrupted ? 'text-rose-400' : 'text-gray-300'}">${c.id} (SHA: ${c.hash})</span>
-                                        ${c.corrupted ? '<span class="text-[9px] px-1 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded">BIT-ROT DETECTED</span>' : ''}
-                                    </div>
-                                    <div class="text-[10px] text-gray-400">
-                                        Primary: <span class="text-cyan-400">${c.primaryNode}</span> | Replicas: ${c.replicaNodes.join(', ')}
-                                    </div>
-                                    <div class="pt-1 flex justify-end">
-                                        <button onclick="vaultEngine.injectBitRot('${c.id}')" class="text-[10px] text-rose-400 hover:text-rose-300 underline">
-                                            Inject Bit-Rot Corruption
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            drawHashRing() {
-                const canvas = document.getElementById('hash-ring-canvas');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const width = canvas.width;
-                const height = canvas.height;
-                const centerX = width / 2;
-                const centerY = height / 2;
-                const radius = 100;
-
-                ctx.clearRect(0, 0, width, height);
-
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.2)';
-                ctx.lineWidth = 10;
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(31, 41, 55, 0.8)';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                const colorMap = {
-                    'AZ-1': '#06b6d4',
-                    'AZ-2': '#10b981',
-                    'AZ-3': '#a855f7'
-                };
-
-                this.hashRing.keys.forEach(hash => {
-                    const nodeId = this.hashRing.ring.get(hash);
-                    const node = this.nodes.find(n => n.id === nodeId);
-                    if (!node) return;
-
-                    const isDead = node.status === 'Dead';
-                    const angle = (hash * Math.PI) / 180;
-                    const x = centerX + radius * Math.cos(angle);
-                    const y = centerY + radius * Math.sin(angle);
-
-                    ctx.beginPath();
-                    ctx.arc(x, y, isDead ? 4 : 7, 0, Math.PI * 2);
-                    ctx.fillStyle = isDead ? '#f43f5e' : (colorMap[node.az] || '#06b6d4');
-                    ctx.fill();
-
-                    ctx.strokeStyle = '#0b0f19';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                });
-            }
-
-            renderTelemetryChart() {
-                const canvas = document.getElementById('telemetry-canvas');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const width = canvas.width;
-                const height = canvas.height;
-
-                ctx.clearRect(0, 0, width, height);
-
-                const step = width / (this.telemetryHistory.length - 1);
-                const maxVal = 16000;
-                const minVal = 12000;
-
-                ctx.beginPath();
-                this.telemetryHistory.forEach((val, idx) => {
-                    const x = idx * step;
-                    const y = height - ((val - minVal) / (maxVal - minVal)) * (height - 30) - 15;
-                    if (idx === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                });
-
-                ctx.strokeStyle = '#06b6d4';
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-
-                const latestIops = this.telemetryHistory[this.telemetryHistory.length - 1];
-                const iopsElem = document.getElementById('telemetry-iops');
-                if (iopsElem) iopsElem.innerText = `${latestIops.toLocaleString()} ops/s`;
-            }
-        }
-
-        let vaultEngine;
-
-        window.onload = function() {
-            vaultEngine = new VaultClusterEngine();
-            vaultEngine.updateAllViews();
-            vaultEngine.logEvent('SUCCESS', 'SYSTEM', 'Vault Enterprise Cluster Engine initialized. 6 Nodes online across 3 Availability Zones.');
-        };
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('active', 'border-cyan-400', 'text-cyan-400', 'bg-gray-900/60');
-                b.classList.add('border-transparent', 'text-gray-400');
-            });
-            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
-
-            const targetBtn = document.getElementById(`tab-${tabId}`);
-            const targetView = document.getElementById(`view-${tabId}`);
-
-            if (targetBtn) {
-                targetBtn.classList.add('active', 'border-cyan-400', 'text-cyan-400', 'bg-gray-900/60');
-                targetBtn.classList.remove('border-transparent', 'text-gray-400');
-            }
-            if (targetView) {
-                targetView.classList.remove('hidden');
-            }
-
-            if (tabId === 'topology') {
-                vaultEngine.drawHashRing();
-            } else if (tabId === 'telemetry') {
-                vaultEngine.renderTelemetryChart();
-            }
-        }
-
-        function triggerChaosPreset(presetKey) {
-            if (presetKey === 'kill-leader' || presetKey === 'random-kill') {
-                const activeLeader = vaultEngine.raft.leader;
-                vaultEngine.logEvent('WARN', 'CHAOS', `Killing active Raft Leader ${activeLeader}...`);
-                vaultEngine.toggleNodeStatus(activeLeader);
-            } else if (presetKey === 'partition-az2') {
-                vaultEngine.logEvent('WARN', 'CHAOS', 'Isolating Availability Zone AZ-2 nodes...');
-                vaultEngine.nodes.filter(n => n.az === 'AZ-2').forEach(n => {
-                    if (n.status === 'Healthy') vaultEngine.toggleNodeStatus(n.id);
-                });
-            } else if (presetKey === 'mass-bitrot') {
-                vaultEngine.logEvent('WARN', 'CHAOS', 'Injecting silent bit-rot data corruption across random replicas...');
-                vaultEngine.objects.forEach(o => o.chunks.forEach(c => vaultEngine.injectBitRot(c.id)));
-            } else if (presetKey === 'cascading') {
-                vaultEngine.logEvent('WARN', 'CHAOS', 'Cascading failure triggered! Killing 3 nodes simultaneously...');
-                vaultEngine.toggleNodeStatus('Node-01');
-                vaultEngine.toggleNodeStatus('Node-03');
-                vaultEngine.toggleNodeStatus('Node-05');
-            } else if (presetKey === 'auto-heal') {
-                vaultEngine.logEvent('SUCCESS', 'CHAOS', 'Auto-Repair Sequence: Restoring dead nodes and running anti-entropy Merkle sync...');
-                vaultEngine.nodes.forEach(n => {
-                    if (n.status === 'Dead') vaultEngine.toggleNodeStatus(n.id);
-                });
-                vaultEngine.merkleEngine.runAntiEntropyCheck();
-            }
-        }
-
-        function handleChaosSelect(val) {
-            if (!val) return;
-            triggerChaosPreset(val);
-            document.getElementById('chaos-presets-select').value = "";
-        }
-
-        function toggleTerminal() {
-            const drawer = document.getElementById('terminal-drawer');
-            const icon = document.getElementById('terminal-toggle-icon');
-            if (drawer.classList.contains('hidden')) {
-                drawer.classList.remove('hidden');
-                icon.className = 'fa-solid fa-chevron-up text-[10px]';
-            } else {
-                drawer.classList.add('hidden');
-                icon.className = 'fa-solid fa-chevron-down text-[10px]';
-            }
-        }
-
-        function clearTerminalLogs() {
-            const terminal = document.getElementById('terminal-drawer');
-            if (terminal) terminal.innerHTML = '';
-        }
-
-        function triggerUploadModal() {
-            document.getElementById('upload-modal').classList.remove('hidden');
-        }
-
-        function closeUploadModal() {
-            document.getElementById('upload-modal').classList.add('hidden');
-        }
-
-        function submitModalUpload() {
-            const name = document.getElementById('modal-filename').value || 'object.bin';
-            const size = parseInt(document.getElementById('modal-filesize').value) || 128;
-            uploadPresetObject(name, size);
-            closeUploadModal();
-        }
-
-        function triggerFileInput() {
-            document.getElementById('mock-file-input').click();
-        }
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                uploadPresetObject(file.name, Math.round(file.size / (1024 * 1024)) || 64);
-            }
-        }
-
-        function uploadPresetObject(name, size) {
-            const numChunks = Math.ceil(size / 64);
-            const chunks = [];
-            
-            for (let i = 1; i <= numChunks; i++) {
-                const chkId = `chk-${Math.floor(10 + Math.random() * 89)}`;
-                const nodes = vaultEngine.hashRing.getNodesForObject(chkId, 3);
-                chunks.push({
-                    id: chkId,
-                    hash: generateHashHex(i + size),
-                    primaryNode: nodes[0] || 'Node-01',
-                    replicaNodes: [nodes[1] || 'Node-02', nodes[2] || 'Node-03'],
-                    corrupted: false
-                });
-            }
-
-            vaultEngine.objects.unshift({ name, size, chunks });
-            vaultEngine.logEvent('SUCCESS', 'OBJECT-PUT', `Successfully uploaded ${name} (${size} MB). Split into ${numChunks} chunks across N=3 quorum.`);
-            vaultEngine.updateAllViews();
-        }
-    </script>
+    <!-- ================= LOGIN / ACCOUNT MODAL ================= -->
+    <div id="login-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel rounded-2xl max-w-sm w-full p-6 border border-amber-500/30 space-y-5 relative modal-pop">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+                <h3 class="font-mono text-sm font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-user"></i> SIGN IN TO VAULT
+                </h3>
+                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <p class="text-[11px] text-gray-400 font-mono">Your name is shown in the header, and stamped onto screenshots and the generated PDF guide. Nothing leaves your browser.</p>
+            <div class="space-y-3 text-xs font-mono">
+                <div>
+                    <label class="block text-gray-400 mb-1">YOUR NAME</label>
+                    <input type="text" id="login-name-input" placeholder="e.g. Priya Sharma" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-amber-400" onkeydown="if(event.key==='Enter') submitLogin();">
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-800">
+                <button onclick="submitLogin()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-amber-500/20 transition-all ripple-btn">
+                    Sign In
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= KEYBOARD SHORTCUTS MODAL ================= -->
+    <div id="shortcuts-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-cyan-500/30 space-y-4 relative modal-pop">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+                <h3 class="font-mono text-sm font-bold text-cyan-400 flex items-center gap-2">
+                    <i class="fa-solid fa-keyboard"></i> KEYBOARD SHORTCUTS
+                </h3>
+                <button onclick="closeShortcutsModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <div id="shortcuts-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= GUIDED TOUR LAYER (built by script.js) ================= -->
+    <div id="tour-root"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
