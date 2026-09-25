@@ -1,93 +1,147 @@
-Promptathon Pitch Deck & Framework Guide
-Welcome to the Interactive Promptathon Pitch Master Kit. This repository serves as a complete blueprint for organizing, presenting, and pitching an AI-driven project developed during a Promptathon or AI Hackathon.
+# 🛡️ VAULT — Fault-Tolerant Distributed Object Storage Engine
 
-Interactive Pitch Navigator
-Select a phase below to jump straight into the pitch blueprint:
+> **Store. Replicate. Detect. Repair. Recover.**
 
-Executive Summary & Problem
+Vault is a distributed object storage system designed to keep data available, consistent, and recoverable even when storage nodes fail, networks are partitioned, or data becomes corrupted.
 
-Prompt Engineering Architecture
+It combines **N=3 replication, consistent hashing, Raft consensus, SHA-256 integrity checks, Merkle Trees, and automatic self-healing** into one interactive system.
 
-Interactive Live Demo Flow
+## 🚀 Key Features
 
-Tech Stack & Build Execution
+- 🗄️ 6-node cluster across 3 Availability Zones
+- 🔀 Consistent Hash Ring with virtual nodes
+- 📦 N=3 replication across independent nodes
+- 🧩 64 MB object chunking
+- 🔐 SHA-256 integrity verification
+- 🌳 Merkle Tree anti-entropy
+- 🧠 Raft consensus & leader election
+- 🩹 Automatic replica repair & self-healing
+- 🧪 Built-in Chaos Engineering
+- 📊 Real-time telemetry & event logs
 
-3-Minute Pitch Script & Deck Guide
+## 🧠 Architecture
 
-Final Pitch Readiness Checklist
+                         CLIENT
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │  Object Router  │
+                  │ Consistent Hash │
+                  └────────┬────────┘
+                           │
+                           ▼
+                     64 MB CHUNKS
+                           │
+                           ▼
+                      N = 3 REPLICAS
+                 ┌─────────┼─────────┐
+                 ▼         ▼         ▼
+               AZ-1       AZ-2       AZ-3
+              N1 / N2    N3 / N4    N5 / N6
+                 └─────────┼─────────┘
+                           │
+                           ▼
+                 SHA-256 + MERKLE TREES
+                           │
+                           ▼
+                    RAFT CONSENSUS
+                           │
+                           ▼
+                   SELF-HEALING ENGINE
+                 Detect → Repair → Verify
 
-1. Executive Summary & Problem
-The Challenge
-Modern workflows are bottlenecked by manual overhead, fragmented tools, and slow execution cycles. Traditional software lacks contextual intelligence, while generic AI outputs often lack reliability.
+## 🔄 How Vault Works
 
-The Innovation
-Our solution leverages contextual prompt orchestration and agentic feedback loops to transform raw inputs into structured, actionable results instantly.
+### 1. Object Chunking
+Large objects are divided into **64 MB chunks** for efficient distributed storage and recovery.
 
-Flow:
-Raw Input / User Intent -> Context & Prompt Pipeline -> AI Model Processing -> Refinement & Output Guardrails -> Actionable High-Impact Result
+### 2. Consistent Hashing
+Chunks are mapped across a **360° hash ring**, distributing data across nodes while reducing data movement when the cluster changes.
 
-2. Prompt Engineering Architecture
-In a Promptathon, judges look closely at how cleverly AI models are instructed. We utilize a multi-layered prompt strategy:
+### 3. N=3 Replication
+Each chunk is stored on **3 independent replicas** to provide fault tolerance.
 
-System Instruction & Persona Mapping: Assigns precise role constraints to eliminate AI fluff.
+### 4. Integrity Protection
+Every chunk uses **SHA-256 checksums** to detect silent data corruption.
 
-Few-Shot In-Context Learning: Provides curated high-quality examples directly inside the prompt.
+### 5. Merkle Anti-Entropy
+Merkle Trees efficiently compare replica state and identify corrupted or missing chunks.
 
-Chain-of-Thought (CoT) Reasoning: Forces step-by-step reasoning before generating final answers.
+### 6. Automatic Self-Healing
 
-Structured JSON Output: Guarantees deterministic parsing for frontend presentation.
+Failure
+   ↓
+Detect
+   ↓
+Find Healthy Replica
+   ↓
+Repair
+   ↓
+Verify SHA-256
+   ↓
+Healthy Cluster
 
-Pipeline:
-[System Context] -> [Few-Shot Samples] -> [User Input] -> [CoT Logic] -> [Valid JSON Output]
+## 💥 Chaos Engineering
 
-3. Interactive Live Demo Flow
-Follow the user journey during a live 60-second pitch demo:
+Vault allows failures to be intentionally injected and observed in real time.
 
-User Action: User inputs a raw, unformatted prompt, document, or dataset.
+| Failure | Recovery |
+|---|---|
+| 🔴 Kill Raft Leader | Leader election + quorum recovery |
+| 🌐 Partition AZ-2 | Failure isolation + replica availability |
+| 🦠 Silent Bit-Rot | Merkle detection + replica repair |
+| 🩹 Automatic Recovery | Detect → Repair → Verify |
 
-Backend Trigger: Context-aware parser formats the input and injects appropriate domain rules.
+## 📊 Live Telemetry
 
-Process: Multi-prompt pipeline breaks down the task into reasoning steps.
+| Metric | Dashboard |
+|---|---:|
+| Operations | **14,250 ops/s** |
+| Read P99 | **1.42 ms** |
+| Write P99 | **3.88 ms** |
+| Storage Overhead | **3.0×** |
+| Availability SLA | **99.999%** |
 
-Validation: Output guardrails inspect for hallucinations and ensure schema compliance.
+> Dashboard metrics shown by the application.
 
-UI Display: High-fidelity structured results appear in real time.
+## 🎯 Problem → Solution
 
-Key Takeaway: Demonstrates a task that usually takes hours being finished in seconds.
+| Problem | Vault Solution |
+|---|---|
+| Node Failure | N=3 Replication + Failover |
+| Network Partition | Quorum + Failure Isolation |
+| Large Objects | 64 MB Chunking |
+| Uneven Distribution | Consistent Hashing |
+| Data Corruption | SHA-256 Verification |
+| Replica Divergence | Merkle Anti-Entropy |
+| Metadata Consistency | Raft Consensus |
+| Missing/Corrupt Replicas | Automatic Repair |
+| Unexpected Failures | Chaos Engineering |
+| Recovery | Self-Healing Engine |
 
-4. Tech Stack & Build Execution
-Frontend / UI: React / Tailwind / Vercel (Ultra-fast user interface & deployment)
+## 🏆 Why Vault?
 
-Prompt Engineering: System Prompts, CoT, Few-Shot (High-precision output structuring)
+Vault makes distributed-storage concepts **visible, interactive, and testable** instead of only theoretical.
 
-AI Models / APIs: OpenAI GPT-4 / Claude 3.5 / Gemini (Multimodal logic & reasoning engine)
+### Judge Demo Flow
 
-Hosting & Deployment: Vercel / Netlify (Continuous deployment during hackathon)
+**Upload → Chunk → Replicate ×3 → Inject Failure → Detect → Repair → Verify**
 
-5. 3-Minute Pitch Script & Deck Guide
-Use this guide to run through your timed 3-minute pitch deck:
+## 🚀 Live Demo
 
-Slide 1 & 2 (0:00 - 0:45):
-"Every year, thousands of professionals waste hours on manual tasks. Existing software requires rigid configuration, and generic AI yields messy results. Today, we built [Project Name] to solve this using intelligent prompt orchestration."
+👉 https://promptathon-eight.vercel.app/
 
-Slide 3 (0:45 - 1:30):
-"Our breakthrough isn't just calling an API—it's how we instruct the model. By combining dynamic context injection with dual-agent verification, [Project Name] ensures output accuracy above 95%."
+### Recommended Demo
 
-Slide 4 (1:30 - 2:30):
-"Let’s see it live. Notice how one click ingests raw input, routes it through our custom prompt pipeline, and delivers a polished result in under three seconds."
+1. Open **Cluster Topology & Ring**
+2. Upload an object
+3. Inspect **Objects & Shards**
+4. **Kill Raft Leader**
+5. **Partition AZ-2**
+6. **Inject Silent Bit-Rot**
+7. Run **Automatic Recovery & Self-Healing**
+8. Observe **Merkle Anti-Entropy & Telemetry**
 
-Slide 5 & 6 (2:30 - 3:00):
-"Built entirely during this Promptathon, our pipeline is scalable across multiple industries. Thank you, and we look forward to your questions!"
+## ⭐ One-Line Summary
 
-6. Final Pitch Readiness Checklist
-Track your progress before presenting to judges:
-
-[ ] Slide deck restricted to 5-6 focused slides
-
-[ ] Live demo tested and recorded as a backup GIF/video
-
-[ ] Prompt architecture clearly explained in UI or slides
-
-[ ] Pitch script timed under 3 minutes
-
-[ ] Prepared responses for Q&A (e.g., API cost, latency, error guardrails)
+> **Vault is a fault-tolerant distributed object storage system that uses replication, consistent hashing, Raft, SHA-256, Merkle Trees, and automated self-healing to remain reliable under real-world failures.**
