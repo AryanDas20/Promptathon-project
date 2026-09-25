@@ -6,7 +6,7 @@
    ========================================================= */
 
 /* ---------------------------------------------------------
-   0. THEME TOKENS (dark default, light override below)
+   0. THEME TOKENS (dark default, GREEN mode override below)
    --------------------------------------------------------- */
 :root {
     --v-bg: #0b0f19;
@@ -19,15 +19,16 @@
     --v-input-bg: #111827;
 }
 
+/* GREEN MODE (replaces the old white/light theme) */
 html[data-theme="light"] {
-    --v-bg: #eef1f8;
-    --v-bg-2: #dfe4f0;
-    --v-panel: rgba(255, 255, 255, 0.75);
-    --v-card: rgba(255, 255, 255, 0.55);
-    --v-border: rgba(15, 23, 42, 0.1);
-    --v-text: #0f172a;
-    --v-text-dim: #475569;
-    --v-input-bg: #ffffff;
+    --v-bg: #e7f6ec;
+    --v-bg-2: #d1eeda;
+    --v-panel: rgba(236, 253, 240, 0.8);
+    --v-card: rgba(220, 252, 231, 0.55);
+    --v-border: rgba(6, 78, 59, 0.18);
+    --v-text: #052e1f;
+    --v-text-dim: #15803d;
+    --v-input-bg: #f0fdf4;
 }
 
 html, body {
@@ -43,19 +44,19 @@ body {
 
 html { overflow-x: hidden; scroll-behavior: smooth; }
 
-/* Light-mode readability overrides for otherwise-dark-coded text/bg classes */
+/* Green-mode readability overrides for otherwise-dark-coded text/bg classes */
 html[data-theme="light"] .text-gray-300,
-html[data-theme="light"] .text-gray-200 { color: #1e293b; }
-html[data-theme="light"] .text-gray-400 { color: #475569; }
-html[data-theme="light"] .text-gray-500 { color: #64748b; }
+html[data-theme="light"] .text-gray-200 { color: #064e3b; }
+html[data-theme="light"] .text-gray-400 { color: #166534; }
+html[data-theme="light"] .text-gray-500 { color: #16a34a; }
 html[data-theme="light"] .bg-gray-900\/60,
 html[data-theme="light"] .bg-gray-900\/80,
 html[data-theme="light"] .bg-gray-950,
 html[data-theme="light"] .bg-gray-950\/90,
-html[data-theme="light"] .bg-gray-950\/60 { background-color: rgba(15, 23, 42, 0.05) !important; }
+html[data-theme="light"] .bg-gray-950\/60 { background-color: rgba(6, 95, 70, 0.06) !important; }
 html[data-theme="light"] .border-gray-800,
-html[data-theme="light"] .border-gray-700 { border-color: rgba(15, 23, 42, 0.12) !important; }
-html[data-theme="light"] .text-white { color: #0f172a; }
+html[data-theme="light"] .border-gray-700 { border-color: rgba(6, 78, 59, 0.16) !important; }
+html[data-theme="light"] .text-white { color: #052e1f; }
 
 /* ---------------------------------------------------------
    Base glass components
@@ -494,7 +495,7 @@ html[data-theme="light"] .text-white { color: #0f172a; }
     padding: 6px;
 }
 
-html[data-theme="light"] .search-results { background: rgba(255,255,255,0.98); }
+html[data-theme="light"] .search-results { background: rgba(236, 253, 240, 0.98); }
 
 .search-result-item {
     display: flex;
@@ -630,7 +631,7 @@ html[data-theme="light"] .search-results { background: rgba(255,255,255,0.98); }
     transition: top 0.3s ease, left 0.3s ease;
 }
 
-html[data-theme="light"] .tour-tooltip { background: rgba(255,255,255,0.98); }
+html[data-theme="light"] .tour-tooltip { background: rgba(236, 253, 240, 0.98); }
 
 @keyframes tourTooltipIn {
     from { opacity: 0; transform: translateY(6px) scale(0.97); }
@@ -662,7 +663,7 @@ html[data-theme="light"] .tour-tooltip { background: rgba(255,255,255,0.98); }
     margin-bottom: 14px;
 }
 
-html[data-theme="light"] .tour-tooltip p { color: #334155; }
+html[data-theme="light"] .tour-tooltip p { color: #14532d; }
 
 .tour-tooltip-footer {
     display: flex;

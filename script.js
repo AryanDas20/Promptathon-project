@@ -11,7 +11,7 @@
      7. Interactive particle background
      8. Boot / splash sequence
      9. Guided tour (full-site)
-     10. Theme (light/dark) system
+     10. Theme (dark/green) system
      11. Account system (sign in / out)
      12. Global search
      13. Tools: screenshot + PDF guide generator
@@ -753,12 +753,12 @@ class ParticleField {
         const ctx = this.ctx;
         const w = this.canvas.width;
         const h = this.canvas.height;
-        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        const isGreen = document.documentElement.getAttribute('data-theme') === 'light';
 
         const grad = ctx.createRadialGradient(w * 0.5, h * 0.15, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
-        if (isLight) {
-            grad.addColorStop(0, '#eef1f8');
-            grad.addColorStop(1, '#dfe4f0');
+        if (isGreen) {
+            grad.addColorStop(0, '#e7f6ec');
+            grad.addColorStop(1, '#c7ecd3');
         } else {
             grad.addColorStop(0, '#0f1729');
             grad.addColorStop(1, '#05070d');
@@ -789,7 +789,7 @@ class ParticleField {
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
-            ctx.globalAlpha = isLight ? 0.35 : 0.55;
+            ctx.globalAlpha = isGreen ? 0.35 : 0.55;
             ctx.fill();
             ctx.globalAlpha = 1;
         });
@@ -940,8 +940,8 @@ class GuidedTour {
             },
             {
                 selector: '[data-tour="btn-theme"]',
-                title: 'Light / Dark Mode',
-                text: 'Switch between dark and light themes. Your choice is remembered for next time. You can also press "D" to toggle instantly.'
+                title: 'Dark / Green Mode',
+                text: 'Switch between dark mode and green mode. Your choice is remembered for next time. You can also press "D" to toggle instantly.'
             },
             {
                 selector: '[data-tour="btn-shortcuts"]',
@@ -1138,7 +1138,7 @@ class GuidedTour {
 let guidedTour;
 
 /* ---------------------------------------------------------
-   10. Theme (light / dark) system
+   10. Theme (dark / green) system
    --------------------------------------------------------- */
 const vaultTheme = {
     apply(theme) {
@@ -1146,8 +1146,8 @@ const vaultTheme = {
         document.documentElement.classList.toggle('dark', theme === 'dark');
         const icon = document.getElementById('theme-toggle-icon');
         const label = document.getElementById('theme-toggle-label');
-        if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-moon text-cyan-300' : 'fa-solid fa-sun text-amber-500';
-        if (label) label.textContent = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+        if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-moon text-cyan-300' : 'fa-solid fa-leaf text-emerald-500';
+        if (label) label.textContent = theme === 'dark' ? 'Dark Mode' : 'Green Mode';
         localStorage.setItem('vault_theme', theme);
     },
     toggle() {
@@ -1155,8 +1155,12 @@ const vaultTheme = {
         this.apply(current === 'dark' ? 'light' : 'dark');
     },
     init() {
-        const saved = localStorage.getItem('vault_theme') ||
-            (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        // Always boot into Dark Mode by default. We deliberately ignore the
+        // OS/browser "prefers-color-scheme" setting here, since that was
+        // causing the site to open in the light/white theme on some
+        // devices. Only an EXPLICIT earlier choice (saved via the toggle
+        // button) will make the site open in Green Mode instead.
+        const saved = localStorage.getItem('vault_theme') || 'dark';
         this.apply(saved);
     }
 };
@@ -1481,7 +1485,7 @@ const SHORTCUTS = [
     { keys: 'T', desc: 'Start the full guided tour' },
     { keys: 'S', desc: 'Take a screenshot' },
     { keys: 'G', desc: 'Download the full PDF guide' },
-    { keys: 'D', desc: 'Toggle light / dark mode' },
+    { keys: 'D', desc: 'Toggle dark / green mode' },
     { keys: 'Esc', desc: 'Close any open modal or the tour' },
     { keys: '?', desc: 'Open this shortcuts panel' }
 ];
@@ -1608,7 +1612,7 @@ const TIPS_CONTENT = [
     { icon: 'fa-magnifying-glass text-emerald-400', title: 'Use global search', body: 'Press "/" and search for any node, object, or chunk ID to jump straight to it, anywhere in the app.' },
     { icon: 'fa-camera text-purple-400', title: 'Document your experiments', body: 'Take a screenshot after each chaos scenario to build a visual timeline of how the cluster recovers.' },
     { icon: 'fa-keyboard text-amber-400', title: 'Go keyboard-only', body: 'Every major action has a shortcut — press "?" any time to see the full cheat-sheet.' },
-    { icon: 'fa-circle-half-stroke text-rose-400', title: 'Match your environment', body: 'Switch to light mode for presentations in a bright room, or keep dark mode for late-night deep dives.' },
+    { icon: 'fa-circle-half-stroke text-rose-400', title: 'Match your environment', body: 'Switch to Green Mode for presentations in a bright room, or keep Dark Mode for late-night deep dives.' },
     { icon: 'fa-file-pdf text-cyan-400', title: 'Study offline', body: 'Download the full PDF guide to read the underlying distributed-systems theory without needing a browser.' },
     { icon: 'fa-network-wired text-emerald-400', title: 'Replication factor trade-off', body: 'Real systems raise N (replica count) for durability but pay extra storage and network cost — there is no free lunch.' },
     { icon: 'fa-tree text-purple-400', title: 'Merkle trees save bandwidth', body: 'Two nodes with matching root hashes are provably identical — no need to transfer or compare every chunk.' },
