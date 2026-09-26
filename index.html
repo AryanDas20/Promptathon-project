@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Vault — an interactive, in-browser simulation of a fault-tolerant distributed object storage cluster: sharding, N=3 quorum replication, consistent hashing, Raft consensus, Merkle-tree anti-entropy, and chaos engineering, built to make distributed-systems concepts tangible for learning and demonstration.">
+    <meta name="keywords" content="distributed systems, object storage, fault tolerance, consistent hashing, Raft consensus, Merkle tree, chaos engineering, quorum replication, bit-rot detection, CAP theorem">
+    <meta name="color-scheme" content="dark light">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Vault: Fault-Tolerant Distributed Object Storage System</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -38,30 +44,38 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between antialiased selection:bg-cyan-500 selection:text-black">
 
+    <a href="#capture-root" class="skip-link">Skip to main content</a>
+
+    <noscript>
+        <div style="position:fixed;inset:0;z-index:99999;background:#0b0f19;color:#f3f4f6;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:sans-serif;">
+            Vault is an interactive simulation and requires JavaScript to run. Please enable JavaScript in your browser to explore the fault-tolerant distributed storage demo.
+        </div>
+    </noscript>
+
     <!-- ================= INTERACTIVE BACKGROUND LAYER ================= -->
-    <canvas id="particle-canvas"></canvas>
-    <div class="bg-orb bg-orb-cyan"></div>
-    <div class="bg-orb bg-orb-purple"></div>
-    <div class="bg-orb bg-orb-emerald"></div>
-    <div class="bg-orb bg-orb-amber"></div>
-    <div class="bg-orb bg-orb-rose"></div>
-    <div class="bg-grid-overlay"></div>
-    <div class="bg-noise-overlay"></div>
+    <canvas id="particle-canvas" role="presentation" aria-hidden="true"></canvas>
+    <div class="bg-orb bg-orb-cyan" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-purple" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-emerald" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-amber" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb-rose" aria-hidden="true"></div>
+    <div class="bg-grid-overlay" aria-hidden="true"></div>
+    <div class="bg-noise-overlay" aria-hidden="true"></div>
 
     <!-- ================= BOOT / SPLASH SCREEN ================= -->
-    <div id="boot-screen">
+    <div id="boot-screen" role="status" aria-live="polite" aria-label="Vault cluster booting">
         <div class="boot-content">
             <div class="boot-logo-wrap">
-                <div class="boot-logo-ring ring-1"></div>
-                <div class="boot-logo-ring ring-2"></div>
-                <i class="fa-solid fa-server boot-logo-icon"></i>
+                <div class="boot-logo-ring ring-1" aria-hidden="true"></div>
+                <div class="boot-logo-ring ring-2" aria-hidden="true"></div>
+                <i class="fa-solid fa-server boot-logo-icon" aria-hidden="true"></i>
             </div>
             <h1 class="boot-title">VAULT</h1>
             <p class="boot-subtitle">Fault-Tolerant Distributed Object Storage Engine</p>
 
-            <div class="boot-log" id="boot-log"></div>
+            <div class="boot-log" id="boot-log" aria-hidden="true"></div>
 
-            <div class="boot-progress-track">
+            <div class="boot-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Boot progress">
                 <div class="boot-progress-fill" id="boot-progress-fill"></div>
             </div>
             <div class="boot-progress-row">
@@ -75,7 +89,7 @@
     <header class="glass-panel sticky top-0 z-40 border-b border-gray-800 px-4 py-3 scanline-wrap">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20 logo-pulse">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20 logo-pulse" aria-hidden="true">
                     <i class="fa-solid fa-server"></i>
                 </div>
                 <div>
@@ -88,26 +102,26 @@
 
             <!-- Health Ping & Account -->
             <div class="flex items-center gap-3 flex-wrap">
-                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-900/80 border border-gray-800 text-xs font-mono">
-                    <span class="relative flex h-2.5 w-2.5">
+                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-900/80 border border-gray-800 text-xs font-mono" role="status" aria-live="polite" aria-atomic="true">
+                    <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
                         <span id="health-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span id="health-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
                     <span id="system-status-text" class="text-emerald-400 font-bold">100% HEALTHY</span>
-                    <span class="text-gray-600">|</span>
+                    <span class="text-gray-600" aria-hidden="true">|</span>
                     <span id="cluster-quorum-stat" class="text-gray-300">QUORUM: 6/6 NODES</span>
                 </div>
 
                 <!-- Account widget -->
                 <div id="account-widget" class="flex items-center gap-2">
-                    <button id="account-login-btn" onclick="openLoginModal()" class="toolbar-btn">
-                        <i class="fa-solid fa-user text-amber-400"></i> Sign In
+                    <button type="button" id="account-login-btn" onclick="openLoginModal()" class="toolbar-btn">
+                        <i class="fa-solid fa-user text-amber-400" aria-hidden="true"></i> Sign In
                     </button>
                     <div id="account-chip" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-900/80 border border-gray-800 text-xs font-mono">
-                        <span class="h-6 w-6 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-[10px] font-bold text-black" id="account-avatar-initial">?</span>
+                        <span class="h-6 w-6 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-[10px] font-bold text-black" id="account-avatar-initial" aria-hidden="true">?</span>
                         <span id="account-name-label" class="text-gray-200"></span>
-                        <button onclick="logoutUser()" class="text-rose-400 hover:text-rose-300 ml-1" title="Log out">
-                            <i class="fa-solid fa-right-from-bracket"></i>
+                        <button type="button" onclick="logoutUser()" class="text-rose-400 hover:text-rose-300 ml-1" aria-label="Log out">
+                            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -116,18 +130,21 @@
 
         <!-- ============ TOOLBAR ROW (all controls equally styled) ============ -->
         <div class="max-w-7xl mx-auto mt-3 flex flex-wrap items-center gap-2">
-            <div class="search-wrap" data-tour="search-bar">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <div class="search-wrap" data-tour="search-bar" role="search">
+                <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+                <label for="global-search-input" class="sr-only">Search nodes, objects, chunks and tips</label>
                 <input id="global-search-input" type="text" placeholder="Search nodes, objects, chunks, tips… ( / )" autocomplete="off"
+                       aria-label="Search nodes, objects, chunks and tips" role="combobox" aria-expanded="false" aria-controls="search-results"
                        oninput="vaultSearch.onInput(this.value)" onfocus="vaultSearch.onInput(this.value)">
-                <div id="search-results" class="search-results hidden"></div>
+                <div id="search-results" class="search-results hidden" role="listbox" aria-live="polite"></div>
             </div>
 
-            <button data-tour="btn-upload" onclick="triggerUploadModal()" class="toolbar-btn toolbar-btn-primary">
-                <i class="fa-solid fa-cloud-arrow-up text-cyan-300"></i> Upload Object
+            <button type="button" data-tour="btn-upload" onclick="triggerUploadModal()" class="toolbar-btn toolbar-btn-primary">
+                <i class="fa-solid fa-cloud-arrow-up text-cyan-300" aria-hidden="true"></i> Upload Object
             </button>
 
-            <select id="chaos-presets-select" data-tour="btn-chaos" onchange="handleChaosSelect(this.value)" class="toolbar-btn cursor-pointer">
+            <label for="chaos-presets-select" class="sr-only">Inject a chaos scenario</label>
+            <select id="chaos-presets-select" data-tour="btn-chaos" onchange="handleChaosSelect(this.value)" class="toolbar-btn cursor-pointer" aria-label="Inject a chaos scenario">
                 <option value="" disabled selected>⚡ Inject Chaos…</option>
                 <option value="kill-leader">🔥 Kill Active Raft Leader</option>
                 <option value="partition-az2">🌐 Network Partition AZ-2</option>
@@ -136,56 +153,56 @@
                 <option value="auto-heal">✨ Trigger Full Auto-Heal Sequence</option>
             </select>
 
-            <button data-tour="btn-tour" onclick="guidedTour.start()" data-tour-pulse class="toolbar-btn">
-                <i class="fa-solid fa-compass text-purple-400"></i> Full Guided Tour
+            <button type="button" data-tour="btn-tour" onclick="guidedTour.start()" data-tour-pulse class="toolbar-btn">
+                <i class="fa-solid fa-compass text-purple-400" aria-hidden="true"></i> Full Guided Tour
             </button>
 
-            <button data-tour="btn-screenshot" onclick="vaultTools.takeScreenshot()" class="toolbar-btn">
-                <i class="fa-solid fa-camera text-emerald-400"></i> Screenshot
+            <button type="button" data-tour="btn-screenshot" onclick="vaultTools.takeScreenshot()" class="toolbar-btn">
+                <i class="fa-solid fa-camera text-emerald-400" aria-hidden="true"></i> Screenshot
             </button>
 
-            <button data-tour="btn-pdf" onclick="vaultTools.generatePdfGuide()" class="toolbar-btn">
-                <i class="fa-solid fa-file-pdf text-rose-400"></i> Download Full Guide (PDF)
+            <button type="button" data-tour="btn-pdf" onclick="vaultTools.generatePdfGuide()" class="toolbar-btn">
+                <i class="fa-solid fa-file-pdf text-rose-400" aria-hidden="true"></i> Download Full Guide (PDF)
             </button>
 
-            <button data-tour="btn-theme" onclick="vaultTheme.toggle()" class="toolbar-btn">
-                <i class="fa-solid fa-circle-half-stroke text-amber-300" id="theme-toggle-icon"></i> <span id="theme-toggle-label">Dark Mode</span>
+            <button type="button" data-tour="btn-theme" onclick="vaultTheme.toggle()" class="toolbar-btn" id="theme-toggle-btn" aria-pressed="false">
+                <i class="fa-solid fa-circle-half-stroke text-amber-300" id="theme-toggle-icon" aria-hidden="true"></i> <span id="theme-toggle-label">Dark Mode</span>
             </button>
 
-            <button data-tour="btn-shortcuts" onclick="openShortcutsModal()" class="toolbar-btn">
-                <i class="fa-solid fa-keyboard text-cyan-300"></i> Shortcuts <kbd class="kbd-chip">?</kbd>
+            <button type="button" data-tour="btn-shortcuts" onclick="openShortcutsModal()" class="toolbar-btn">
+                <i class="fa-solid fa-keyboard text-cyan-300" aria-hidden="true"></i> Shortcuts <kbd class="kbd-chip">?</kbd>
             </button>
         </div>
     </header>
 
-    <nav class="border-b border-gray-800 bg-gray-950/60 px-4">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-start gap-2 py-2.5 text-xs font-mono">
-            <button id="tab-topology" data-tour="tab-topology" onclick="switchTab('topology')" class="tab-btn active px-4 py-2 rounded-lg border border-cyan-400 text-cyan-400 bg-gray-900/60 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-network-wired"></i> Cluster Topology & Ring
+    <nav class="border-b border-gray-800 bg-gray-950/60 px-4" aria-label="Vault sections">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-start gap-2 py-2.5 text-xs font-mono" role="tablist" aria-label="Vault feature tabs">
+            <button type="button" id="tab-topology" data-tour="tab-topology" onclick="switchTab('topology')" role="tab" aria-selected="true" aria-controls="view-topology" tabindex="0" class="tab-btn active px-4 py-2 rounded-lg border border-cyan-400 text-cyan-400 bg-gray-900/60 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-network-wired" aria-hidden="true"></i> Cluster Topology & Ring
             </button>
-            <button id="tab-objects" data-tour="tab-objects" onclick="switchTab('objects')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-cubes"></i> Objects & Shards
+            <button type="button" id="tab-objects" data-tour="tab-objects" onclick="switchTab('objects')" role="tab" aria-selected="false" aria-controls="view-objects" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-cubes" aria-hidden="true"></i> Objects & Shards
             </button>
-            <button id="tab-chaos" data-tour="tab-chaos" onclick="switchTab('chaos')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-skull-crossbones text-rose-400"></i> Chaos Engineering
+            <button type="button" id="tab-chaos" data-tour="tab-chaos" onclick="switchTab('chaos')" role="tab" aria-selected="false" aria-controls="view-chaos" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-skull-crossbones text-rose-400" aria-hidden="true"></i> Chaos Engineering
             </button>
-            <button id="tab-consensus" data-tour="tab-consensus" onclick="switchTab('consensus')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-shield-halved"></i> Consensus & Anti-Entropy
+            <button type="button" id="tab-consensus" data-tour="tab-consensus" onclick="switchTab('consensus')" role="tab" aria-selected="false" aria-controls="view-consensus" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Consensus & Anti-Entropy
             </button>
-            <button id="tab-explained" data-tour="tab-explained" onclick="switchTab('explained')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-amber-400/80 hover:text-amber-300 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-graduation-cap"></i> Vault Explained 
+            <button type="button" id="tab-explained" data-tour="tab-explained" onclick="switchTab('explained')" role="tab" aria-selected="false" aria-controls="view-explained" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-amber-400/80 hover:text-amber-300 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> Vault Explained
             </button>
-            <button id="tab-calculator" data-tour="tab-calculator" onclick="switchTab('calculator')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-cyan-300/90 hover:text-cyan-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-calculator"></i> Storage Calculator
+            <button type="button" id="tab-calculator" data-tour="tab-calculator" onclick="switchTab('calculator')" role="tab" aria-selected="false" aria-controls="view-calculator" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-cyan-300/90 hover:text-cyan-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-calculator" aria-hidden="true"></i> Storage Calculator
             </button>
-            <button id="tab-telemetry" data-tour="tab-telemetry" onclick="switchTab('telemetry')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-chart-line"></i> Telemetry & IOPS
+            <button type="button" id="tab-telemetry" data-tour="tab-telemetry" onclick="switchTab('telemetry')" role="tab" aria-selected="false" aria-controls="view-telemetry" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-gray-400 hover:text-gray-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-chart-line" aria-hidden="true"></i> Telemetry & Diagnostics
             </button>
-            <button id="tab-tips" data-tour="tab-tips" onclick="switchTab('tips')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-emerald-300/90 hover:text-emerald-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-lightbulb"></i> Tips & Best Practices
+            <button type="button" id="tab-tips" data-tour="tab-tips" onclick="switchTab('tips')" role="tab" aria-selected="false" aria-controls="view-tips" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-emerald-300/90 hover:text-emerald-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-lightbulb" aria-hidden="true"></i> Tips & Best Practices
             </button>
-            <button id="tab-about" data-tour="tab-about" onclick="switchTab('about')" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-purple-300/90 hover:text-purple-200 transition-all flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-circle-info"></i> About & Team
+            <button type="button" id="tab-about" data-tour="tab-about" onclick="switchTab('about')" role="tab" aria-selected="false" aria-controls="view-about" tabindex="-1" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-purple-300/90 hover:text-purple-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i> About & Team
             </button>
         </div>
     </nav>
@@ -193,12 +210,12 @@
     <main id="capture-root" class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
         <!-- TAB 1: TOPOLOGY & RING VIEW -->
-        <section id="view-topology" class="tab-view space-y-6">
+        <section id="view-topology" class="tab-view space-y-6" role="tabpanel" aria-labelledby="tab-topology" tabindex="0">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
                     <div class="flex items-center justify-between">
                         <h2 class="text-sm font-mono font-bold text-gray-300 flex items-center gap-2">
-                            <i class="fa-solid fa-server text-cyan-400"></i> ACTIVE STORAGE CLUSTER (6 NODES / 3 AZs)
+                            <i class="fa-solid fa-server text-cyan-400" aria-hidden="true"></i> ACTIVE STORAGE CLUSTER (6 NODES / 3 AZs)
                         </h2>
                         <span class="text-[11px] font-mono text-gray-500">Click node power button to test failure routing</span>
                     </div>
@@ -211,7 +228,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <h3 class="font-mono text-xs font-bold text-cyan-400 flex items-center gap-2">
-                                <i class="fa-solid fa-circle-notch spin-slow"></i> CONSISTENT HASH RING
+                                <i class="fa-solid fa-circle-notch spin-slow" aria-hidden="true"></i> CONSISTENT HASH RING
                             </h3>
                             <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">N=3 Replicas</span>
                         </div>
@@ -219,7 +236,7 @@
                             Virtual nodes map 360° key space across availability zones for optimal workload distribution.
                         </p>
                         <div class="flex justify-center items-center py-2 relative">
-                            <canvas id="hash-ring-canvas" width="260" height="260" class="mx-auto"></canvas>
+                            <canvas id="hash-ring-canvas" width="260" height="260" class="mx-auto" role="img" aria-label="Consistent hash ring diagram"></canvas>
                         </div>
                     </div>
 
@@ -239,15 +256,15 @@
         </section>
 
         <!-- TAB 2: OBJECTS & SHARDS VIEW -->
-        <section id="view-objects" class="tab-view hidden space-y-6">
+        <section id="view-objects" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-objects" tabindex="0">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-sm font-mono font-bold text-gray-300 flex items-center gap-2">
-                        <i class="fa-solid fa-database text-cyan-400"></i> OBJECT EXPLORER & REPLICA MAPPER
+                        <i class="fa-solid fa-database text-cyan-400" aria-hidden="true"></i> OBJECT EXPLORER & REPLICA MAPPER
                     </h2>
                     <p class="text-xs text-gray-400">Objects are sharded into chunks, checksummed with SHA-256, and replicated across Quorum N=3.</p>
                 </div>
-                <button onclick="triggerUploadModal()" class="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded-lg transition-all ripple-btn">
+                <button type="button" onclick="triggerUploadModal()" class="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                     + Upload New Object
                 </button>
             </div>
@@ -258,11 +275,11 @@
         </section>
 
         <!-- TAB 3: CHAOS ARENA VIEW -->
-        <section id="view-chaos" class="tab-view hidden space-y-6">
+        <section id="view-chaos" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-chaos" tabindex="0">
             <div class="glass-panel rounded-2xl p-6 border border-rose-500/20 space-y-6">
                 <div>
                     <h2 class="text-base font-mono font-bold text-rose-400 flex items-center gap-2">
-                        <i class="fa-solid fa-skull-crossbones"></i> CHAOS ENGINEERING & FAULT INJECTION CONTROL
+                        <i class="fa-solid fa-skull-crossbones" aria-hidden="true"></i> CHAOS ENGINEERING & FAULT INJECTION CONTROL
                     </h2>
                     <p class="text-xs text-gray-400 mt-1">
                         Test Vault's fault tolerance under sudden node crashes, silent bit-rot, network split-brain partitions, and cascading failure states.
@@ -273,11 +290,11 @@
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between hover-lift">
                         <div>
                             <div class="flex items-center gap-2 text-amber-400 font-mono text-xs font-bold">
-                                <i class="fa-solid fa-crown"></i> Kill Raft Leader
+                                <i class="fa-solid fa-crown" aria-hidden="true"></i> Kill Raft Leader
                             </div>
                             <p class="text-xs text-gray-400 mt-1">Terminates the active primary node holding the Raft leader lease to trigger instant quorum election.</p>
                         </div>
-                        <button onclick="triggerChaosPreset('kill-leader')" class="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono rounded-lg transition-all ripple-btn">
+                        <button type="button" onclick="triggerChaosPreset('kill-leader')" class="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                             Trigger Leader Crash
                         </button>
                     </div>
@@ -285,11 +302,11 @@
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between hover-lift">
                         <div>
                             <div class="flex items-center gap-2 text-rose-400 font-mono text-xs font-bold">
-                                <i class="fa-solid fa-network-wired"></i> Partition AZ-2 Zone
+                                <i class="fa-solid fa-network-wired" aria-hidden="true"></i> Partition AZ-2 Zone
                             </div>
                             <p class="text-xs text-gray-400 mt-1">Simulates a partial network isolation affecting Node-03 and Node-04 simultaneously.</p>
                         </div>
-                        <button onclick="triggerChaosPreset('partition-az2')" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-mono rounded-lg transition-all ripple-btn">
+                        <button type="button" onclick="triggerChaosPreset('partition-az2')" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                             Isolate Availability Zone
                         </button>
                     </div>
@@ -297,11 +314,11 @@
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-3 flex flex-col justify-between hover-lift">
                         <div>
                             <div class="flex items-center gap-2 text-purple-400 font-mono text-xs font-bold">
-                                <i class="fa-solid fa-biohazard"></i> Inject Silent Bit-Rot
+                                <i class="fa-solid fa-biohazard" aria-hidden="true"></i> Inject Silent Bit-Rot
                             </div>
                             <p class="text-xs text-gray-400 mt-1">Corrupts random binary disk chunks without updating state. Watch Merkle trees catch and heal it.</p>
                         </div>
-                        <button onclick="triggerChaosPreset('mass-bitrot')" class="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-mono rounded-lg transition-all ripple-btn">
+                        <button type="button" onclick="triggerChaosPreset('mass-bitrot')" class="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-mono rounded-lg transition-all ripple-btn">
                             Corrupt Replicas
                         </button>
                     </div>
@@ -309,7 +326,7 @@
 
                 <div class="pt-4 border-t border-gray-800 flex justify-between items-center flex-wrap gap-3">
                     <span class="text-xs text-gray-400 font-mono">Need to restore full cluster operational state?</span>
-                    <button onclick="triggerChaosPreset('auto-heal')" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold rounded-lg transition-all ripple-btn">
+                    <button type="button" onclick="triggerChaosPreset('auto-heal')" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold rounded-lg transition-all ripple-btn">
                         ✨ Run Automatic Recovery & Self-Healing
                     </button>
                 </div>
@@ -317,15 +334,15 @@
         </section>
 
         <!-- TAB 4: CONSENSUS & MERKLE TREE VIEW -->
-        <section id="view-consensus" class="tab-view hidden space-y-6">
+        <section id="view-consensus" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-consensus" tabindex="0">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 hover-lift">
                     <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                         <h3 class="font-mono text-xs font-bold text-cyan-400 flex items-center gap-2">
-                            <i class="fa-solid fa-check-double"></i> RAFT CONSENSUS LOG & STATE MACHINE
+                            <i class="fa-solid fa-check-double" aria-hidden="true"></i> RAFT CONSENSUS LOG & STATE MACHINE
                         </h3>
                         <span id="raft-leader-badge" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono text-[10px] font-bold">
-                            <i class="fa-solid fa-crown text-[9px]"></i> Node-01
+                            <i class="fa-solid fa-crown text-[9px]" aria-hidden="true"></i> Node-01
                         </span>
                     </div>
 
@@ -353,7 +370,7 @@
 
                     <div class="space-y-2">
                         <span class="text-[10px] font-mono text-gray-400 block">REPLICATED LOG ENTRIES:</span>
-                        <div id="raft-log-entries" class="bg-gray-950 p-3 rounded-xl border border-gray-800 font-mono text-[11px] space-y-1 max-h-40 overflow-y-auto">
+                        <div id="raft-log-entries" class="bg-gray-950 p-3 rounded-xl border border-gray-800 font-mono text-[11px] space-y-1 max-h-40 overflow-y-auto" aria-live="polite">
                             <!-- Log entries via JS -->
                         </div>
                     </div>
@@ -363,9 +380,9 @@
                     <div>
                         <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                             <h3 class="font-mono text-xs font-bold text-emerald-400 flex items-center gap-2">
-                                <i class="fa-solid fa-tree"></i> MERKLE TREE ANTI-ENTROPY SYNC
+                                <i class="fa-solid fa-tree" aria-hidden="true"></i> MERKLE TREE ANTI-ENTROPY SYNC
                             </h3>
-                            <button onclick="vaultEngine.merkleEngine.runAntiEntropyCheck()" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] rounded transition-all ripple-btn">
+                            <button type="button" onclick="vaultEngine.merkleEngine.runAntiEntropyCheck()" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] rounded transition-all ripple-btn">
                                 Sync Merkle Tree
                             </button>
                         </div>
@@ -374,14 +391,14 @@
                             Merkle Trees compare hierarchical hashes between nodes to detect missing or corrupted data chunks in logarithmic O(log N) time without downloading full object bodies.
                         </p>
 
-                        <div id="merkle-tree-graphic" class="p-4 bg-gray-950 rounded-xl border border-gray-800 font-mono space-y-3 my-2">
+                        <div id="merkle-tree-graphic" class="p-4 bg-gray-950 rounded-xl border border-gray-800 font-mono space-y-3 my-2" aria-live="polite">
                             <!-- Rendered graphic via JS -->
                         </div>
                     </div>
 
                     <div class="p-3 bg-cyan-500/5 rounded-xl border border-cyan-500/20 text-xs text-gray-300 space-y-1">
                         <div class="font-bold text-cyan-400 text-[11px] flex items-center gap-1.5">
-                            <i class="fa-solid fa-shield-cat"></i> Self-Healing Protocol Active
+                            <i class="fa-solid fa-shield-cat" aria-hidden="true"></i> Self-Healing Protocol Active
                         </div>
                         <p class="text-[11px] text-gray-400">
                             When checksum discrepancies are detected, missing chunks are automatically pulled from healthy N=3 quorum nodes and restored in the background.
@@ -392,11 +409,11 @@
         </section>
 
         <!-- TAB 5: VAULT EXPLAINED (CLASS 10 LEVEL) -->
-        <section id="view-explained" class="tab-view hidden space-y-6">
+        <section id="view-explained" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-explained" tabindex="0">
             <div class="glass-panel rounded-2xl p-6 border border-amber-500/30 space-y-6">
                 <div>
                     <h2 class="text-base font-mono font-bold text-amber-400 flex items-center gap-2">
-                        <i class="fa-solid fa-graduation-cap"></i> HOW VAULT WORKS (HIGH SCHOOL ARCHITECTURE GUIDE)
+                        <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> HOW VAULT WORKS (HIGH SCHOOL ARCHITECTURE GUIDE)
                     </h2>
                     <p class="text-xs text-gray-300 mt-1">
                         Distributed systems sound complex, but they are built on simple real-world ideas! Here is how Vault keeps your data 100% safe:
@@ -406,7 +423,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-cyan-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-scissors"></i> 1. Object Sharding (Tearing the Book)
+                            <i class="fa-solid fa-scissors" aria-hidden="true"></i> 1. Object Sharding (Tearing the Book)
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             Instead of saving a huge 100GB video as a single massive file, Vault tears it into smaller 64MB chapters called <span class="text-cyan-300 font-mono">Chunks</span>. This allows multiple storage servers to download and read pieces simultaneously.
@@ -415,7 +432,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-emerald-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-copy"></i> 2. Quorum Replication (N=3 Safety Copies)
+                            <i class="fa-solid fa-copy" aria-hidden="true"></i> 2. Quorum Replication (N=3 Safety Copies)
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             Every chunk is stored on <span class="text-emerald-300 font-mono">3 different computers</span> across distinct data centers. Even if 2 computers catch fire or lose power, your data remains accessible from the 3rd replica.
@@ -424,7 +441,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-purple-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-circle-notch"></i> 3. Consistent Hash Ring (Clock Mapping)
+                            <i class="fa-solid fa-circle-notch" aria-hidden="true"></i> 3. Consistent Hash Ring (Clock Mapping)
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             Imagine a 360-degree clock. Every server gets a position on the clock. When a new file chunk is saved, its fingerprint maps to a number on the clock, placing it in the nearest server.
@@ -433,7 +450,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-rose-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-fingerprint"></i> 4. Bit-Rot Detection & Merkle Trees
+                            <i class="fa-solid fa-fingerprint" aria-hidden="true"></i> 4. Bit-Rot Detection & Merkle Trees
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             Over time, physical computer hard drives age and flip random 0s and 1s (<span class="text-rose-300 font-mono">Bit-Rot</span>). Vault checks SHA-256 digital fingerprints every few seconds to catch and repair silent corruption automatically.
@@ -442,7 +459,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-amber-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-scale-balanced"></i> 5. Quorum Formula: R + W &gt; N
+                            <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> 5. Quorum Formula: R + W &gt; N
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             <span class="text-amber-300 font-mono">R</span> = nodes contacted on read, <span class="text-amber-300 font-mono">W</span> = nodes contacted on write, <span class="text-amber-300 font-mono">N</span> = total replicas. If R + W is greater than N, every read is guaranteed to overlap the latest write — that overlap is what makes the data "strongly consistent". Try it yourself in the Storage Calculator tab.
@@ -451,7 +468,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-cyan-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-puzzle-piece"></i> 6. Erasure Coding (Cheaper Than N=3)
+                            <i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i> 6. Erasure Coding (Cheaper Than N=3)
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             Instead of 3 full copies, split data into <span class="text-cyan-300 font-mono">k</span> data pieces plus <span class="text-cyan-300 font-mono">m</span> parity pieces (like a Sudoku checksum row). Any <span class="text-cyan-300 font-mono">k</span> of the <span class="text-cyan-300 font-mono">k+m</span> pieces can rebuild the original — far less storage overhead than full replication, at the cost of extra CPU work to rebuild.
@@ -460,7 +477,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-emerald-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-comments"></i> 7. Gossip Protocols & Membership
+                            <i class="fa-solid fa-comments" aria-hidden="true"></i> 7. Gossip Protocols & Membership
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             Nodes don't rely on one central "phone book". Instead, each node randomly tells a few peers what it knows ("gossips"), and that knowledge spreads through the whole cluster in <span class="text-emerald-300 font-mono">O(log N)</span> rounds — the same trick that makes a rumor spread through a school in a single day.
@@ -469,7 +486,7 @@
 
                     <div class="p-4 rounded-xl bg-gray-900/60 border border-gray-800 space-y-2 hover-lift">
                         <div class="font-bold text-purple-400 font-mono flex items-center gap-2">
-                            <i class="fa-solid fa-scale-unbalanced"></i> 8. CAP Theorem
+                            <i class="fa-solid fa-scale-unbalanced" aria-hidden="true"></i> 8. CAP Theorem
                         </div>
                         <p class="text-gray-300 leading-relaxed">
                             During a network split you can only fully keep two of three promises: <span class="text-purple-300 font-mono">Consistency</span>, <span class="text-purple-300 font-mono">Availability</span>, and <span class="text-purple-300 font-mono">Partition tolerance</span>. Since real networks do split, Vault leans on Raft to stay strongly consistent for committed writes, while replication keeps it highly available for reads.
@@ -499,11 +516,11 @@
         </section>
 
         <!-- TAB: STORAGE & REPLICATION CALCULATOR -->
-        <section id="view-calculator" class="tab-view hidden space-y-6">
+        <section id="view-calculator" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-calculator" tabindex="0">
             <div class="glass-panel rounded-2xl p-6 border border-cyan-500/20 space-y-5 hover-lift">
                 <div>
                     <h2 class="text-base font-mono font-bold text-cyan-300 flex items-center gap-2">
-                        <i class="fa-solid fa-calculator"></i> STORAGE, QUORUM & ERASURE-CODING CALCULATOR
+                        <i class="fa-solid fa-calculator" aria-hidden="true"></i> STORAGE, QUORUM & ERASURE-CODING CALCULATOR
                     </h2>
                     <p class="text-xs text-gray-400 mt-1">
                         Plug in your own numbers and see exactly how replication factor, quorum size, and erasure coding trade storage cost for fault tolerance — the same math real systems like Amazon S3, Cassandra, and Ceph run under the hood.
@@ -516,11 +533,11 @@
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="calc-input-label">DATASET SIZE (GB)</label>
+                                <label for="calc-data-size" class="calc-input-label">DATASET SIZE (GB)</label>
                                 <input type="number" id="calc-data-size" value="500" min="1" class="calc-input" oninput="vaultCalc.update()">
                             </div>
                             <div>
-                                <label class="calc-input-label">STORAGE NODES</label>
+                                <label for="calc-node-count" class="calc-input-label">STORAGE NODES</label>
                                 <input type="number" id="calc-node-count" value="6" min="1" max="64" class="calc-input" oninput="vaultCalc.update()">
                             </div>
                         </div>
@@ -529,15 +546,15 @@
                             <span class="text-[10px] font-mono text-gray-400 block">REPLICATION MODEL</span>
                             <div class="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label class="calc-input-label">REPLICAS (N)</label>
+                                    <label for="calc-n" class="calc-input-label">REPLICAS (N)</label>
                                     <input type="number" id="calc-n" value="3" min="1" max="9" class="calc-input" oninput="vaultCalc.update()">
                                 </div>
                                 <div>
-                                    <label class="calc-input-label">READ QUORUM (R)</label>
+                                    <label for="calc-r" class="calc-input-label">READ QUORUM (R)</label>
                                     <input type="number" id="calc-r" value="2" min="1" max="9" class="calc-input" oninput="vaultCalc.update()">
                                 </div>
                                 <div>
-                                    <label class="calc-input-label">WRITE QUORUM (W)</label>
+                                    <label for="calc-w" class="calc-input-label">WRITE QUORUM (W)</label>
                                     <input type="number" id="calc-w" value="2" min="1" max="9" class="calc-input" oninput="vaultCalc.update()">
                                 </div>
                             </div>
@@ -547,11 +564,11 @@
                             <span class="text-[10px] font-mono text-gray-400 block">ERASURE CODING MODEL (k data + m parity shards)</span>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="calc-input-label">DATA SHARDS (k)</label>
+                                    <label for="calc-ec-k" class="calc-input-label">DATA SHARDS (k)</label>
                                     <input type="number" id="calc-ec-k" value="4" min="1" max="20" class="calc-input" oninput="vaultCalc.update()">
                                 </div>
                                 <div>
-                                    <label class="calc-input-label">PARITY SHARDS (m)</label>
+                                    <label for="calc-ec-m" class="calc-input-label">PARITY SHARDS (m)</label>
                                     <input type="number" id="calc-ec-m" value="2" min="1" max="20" class="calc-input" oninput="vaultCalc.update()">
                                 </div>
                             </div>
@@ -559,7 +576,7 @@
                     </div>
 
                     <!-- RESULTS -->
-                    <div class="space-y-4">
+                    <div class="space-y-4" aria-live="polite">
                         <div class="grid grid-cols-2 gap-3">
                             <div class="calc-result-tile">
                                 <span class="calc-result-label">REPLICATION STORAGE NEEDED</span>
@@ -618,17 +635,17 @@
         </section>
 
         <!-- TAB 6: TELEMETRY & IOPS VIEW -->
-        <section id="view-telemetry" class="tab-view hidden space-y-6">
+        <section id="view-telemetry" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-telemetry" tabindex="0">
             <div class="glass-panel rounded-2xl p-5 border border-gray-800 space-y-4 hover-lift">
                 <div class="flex items-center justify-between">
                     <h3 class="font-mono text-xs font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-area"></i> REAL-TIME CLUSTER METRICS & THROUGHPUT
+                        <i class="fa-solid fa-chart-area" aria-hidden="true"></i> REAL-TIME CLUSTER METRICS & THROUGHPUT
                     </h3>
                     <span id="telemetry-iops" class="font-mono text-xs font-bold text-emerald-400">14,250 ops/s</span>
                 </div>
 
                 <div class="h-48 w-full bg-gray-950 rounded-xl p-2 border border-gray-800 flex items-center justify-center">
-                    <canvas id="telemetry-canvas" width="700" height="170" class="w-full h-full"></canvas>
+                    <canvas id="telemetry-canvas" width="700" height="170" class="w-full h-full" role="img" aria-label="Cluster IOPS chart over time"></canvas>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
@@ -653,10 +670,10 @@
         </section>
 
         <!-- TAB 7: TIPS & BEST PRACTICES -->
-        <section id="view-tips" class="tab-view hidden space-y-6">
+        <section id="view-tips" class="tab-view hidden space-y-6" role="tabpanel" aria-labelledby="tab-tips" tabindex="0">
             <div class="glass-panel rounded-2xl p-6 border border-emerald-500/20 space-y-4">
                 <h2 class="text-base font-mono font-bold text-emerald-400 flex items-center gap-2">
-                    <i class="fa-solid fa-lightbulb"></i> TIPS & BEST PRACTICES
+                    <i class="fa-solid fa-lightbulb" aria-hidden="true"></i> TIPS & BEST PRACTICES
                 </h2>
                 <p class="text-xs text-gray-400">Practical tips for exploring Vault, plus real distributed-systems best practices behind the simulation.</p>
                 <div id="tips-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -666,13 +683,13 @@
         </section>
 
         <!-- TAB 8: ABOUT & TEAM VIEW -->
-        <section id="view-about" class="tab-view hidden space-y-8">
+        <section id="view-about" class="tab-view hidden space-y-8" role="tabpanel" aria-labelledby="tab-about" tabindex="0">
 
             <div class="about-hero glass-panel rounded-3xl p-7 md:p-9 border border-purple-500/25 space-y-5 hover-lift">
-                <div class="about-hero-icon">
+                <div class="about-hero-icon" aria-hidden="true">
                     <i class="fa-solid fa-server"></i>
                 </div>
-                <span class="about-eyebrow"><i class="fa-solid fa-sparkles"></i> ABOUT THIS PROJECT</span>
+                <span class="about-eyebrow"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> ABOUT THIS PROJECT</span>
                 <h2 class="about-hero-title">Distributed systems, made <span class="about-hero-title-accent">tangible</span></h2>
                 <p class="text-sm text-gray-300 leading-relaxed max-w-3xl">
                     Vault is an interactive simulation of a fault-tolerant, distributed object storage system. It exists to make
@@ -684,21 +701,39 @@
                     watch the cluster detect the fault and repair itself in real time. The goal is simple: turn concepts that
                     usually live in textbooks and whiteboards into something you can click, break, and watch heal.
                 </p>
+
+                <div class="p-4 rounded-xl bg-gray-900/50 border border-gray-800 space-y-2 max-w-3xl">
+                    <h3 class="text-xs font-mono font-bold text-cyan-300 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye" aria-hidden="true"></i> PROBLEM STATEMENT & HOW VAULT ADDRESSES IT
+                    </h3>
+                    <p class="text-xs text-gray-300 leading-relaxed">
+                        <strong>Problem:</strong> distributed storage concepts (sharding, replication, consensus, anti-entropy,
+                        failure recovery) are hard to learn from diagrams alone because their behavior only becomes clear once a
+                        real failure happens.
+                    </p>
+                    <p class="text-xs text-gray-300 leading-relaxed">
+                        <strong>Solution:</strong> Vault gives every concept a live, breakable, self-healing implementation in
+                        the browser — a working consistent-hash ring, a Raft leader-election state machine, a Merkle-tree
+                        integrity checker, and a chaos-engineering console — so learners can trigger a real failure and watch
+                        the exact recovery mechanism run, instead of only reading about it.
+                    </p>
+                </div>
+
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                     <div class="about-feature-tile hover-lift">
-                        <i class="fa-solid fa-cubes text-cyan-400 mb-1"></i>
+                        <i class="fa-solid fa-cubes text-cyan-400 mb-1" aria-hidden="true"></i>
                         <p class="text-[10px] font-mono text-gray-400">Sharding & Replication</p>
                     </div>
                     <div class="about-feature-tile hover-lift">
-                        <i class="fa-solid fa-circle-notch text-purple-400 mb-1"></i>
+                        <i class="fa-solid fa-circle-notch text-purple-400 mb-1" aria-hidden="true"></i>
                         <p class="text-[10px] font-mono text-gray-400">Consistent Hashing</p>
                     </div>
                     <div class="about-feature-tile hover-lift">
-                        <i class="fa-solid fa-shield-halved text-emerald-400 mb-1"></i>
+                        <i class="fa-solid fa-shield-halved text-emerald-400 mb-1" aria-hidden="true"></i>
                         <p class="text-[10px] font-mono text-gray-400">Raft Consensus</p>
                     </div>
                     <div class="about-feature-tile hover-lift">
-                        <i class="fa-solid fa-skull-crossbones text-rose-400 mb-1"></i>
+                        <i class="fa-solid fa-skull-crossbones text-rose-400 mb-1" aria-hidden="true"></i>
                         <p class="text-[10px] font-mono text-gray-400">Chaos Engineering</p>
                     </div>
                 </div>
@@ -707,30 +742,31 @@
             <div class="space-y-5">
                 <div class="flex items-center justify-between flex-wrap gap-3">
                     <h2 class="text-base font-mono font-bold text-gray-200 flex items-center gap-2">
-                        <i class="fa-solid fa-users text-cyan-400"></i> THE TEAM BEHIND VAULT
+                        <i class="fa-solid fa-users text-cyan-400" aria-hidden="true"></i> THE TEAM BEHIND VAULT
                     </h2>
-                    <span class="team-count-badge"><i class="fa-solid fa-user-group"></i> 3 Engineers &middot; LPU</span>
+                    <span class="team-count-badge"><i class="fa-solid fa-user-group" aria-hidden="true"></i> 3 Engineers &middot; LPU</span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                     <!-- Developer 1: Aryan Das -->
                     <div class="dev-card">
-                        <div class="dev-card-glow dev-glow-cyan"></div>
-                        <div class="dev-card-topbar dev-topbar-cyan"></div>
+                        <div class="dev-card-glow dev-glow-cyan" aria-hidden="true"></div>
+                        <div class="dev-card-topbar dev-topbar-cyan" aria-hidden="true"></div>
                         <div class="relative z-10 flex flex-col items-center text-center h-full">
                             <div class="dev-avatar-ring dev-ring-cyan">
                                 <div class="dev-avatar-wrap">
-                                    <img class="dev-avatar-img" alt="Aryan Das"
+                                    <img class="dev-avatar-img" alt="Portrait of Aryan Das"
                                          src="WhatsApp Image 2026-09-26 at 3.43.02 AM.jpeg"
+                                         loading="lazy"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div class="dev-avatar dev-avatar-cyan" style="display:none;">AD</div>
+                                    <div class="dev-avatar dev-avatar-cyan" style="display:none;" aria-hidden="true">AD</div>
                                 </div>
-                                <span class="dev-avatar-badge dev-badge-cyan" title="Core Engineer"><i class="fa-solid fa-code"></i></span>
+                                <span class="dev-avatar-badge dev-badge-cyan" title="Core Engineer" aria-hidden="true"><i class="fa-solid fa-code"></i></span>
                             </div>
                             <h3 class="dev-name">Aryan Das</h3>
-                            <span class="dev-role-pill dev-role-cyan"><i class="fa-solid fa-crown"></i> Core Systems Engineer</span>
-                            <p class="dev-university"><i class="fa-solid fa-graduation-cap"></i> B.Tech CSE &middot; Lovely Professional University</p>
+                            <span class="dev-role-pill dev-role-cyan"><i class="fa-solid fa-crown" aria-hidden="true"></i> Core Systems Engineer</span>
+                            <p class="dev-university"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> B.Tech CSE &middot; Lovely Professional University</p>
                             <p class="dev-bio">
                                 Aryan designed and built Vault's core simulation engine — the consistent hash ring, Raft
                                 consensus manager, and Merkle-tree anti-entropy logic that power the whole cluster.
@@ -745,10 +781,10 @@
                             </div>
                             <div class="flex gap-2 pt-4 border-t border-gray-800 w-full mt-auto">
                                 <a href="https://in.linkedin.com/in/aryandas-iit" target="_blank" rel="noopener noreferrer" class="social-btn social-linkedin">
-                                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                                    <i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn
                                 </a>
                                 <a href="https://github.com/AryanDas20" target="_blank" rel="noopener noreferrer" class="social-btn social-github">
-                                    <i class="fa-brands fa-github"></i> GitHub
+                                    <i class="fa-brands fa-github" aria-hidden="true"></i> GitHub
                                 </a>
                             </div>
                         </div>
@@ -756,21 +792,22 @@
 
                     <!-- Developer 2: Pranay Kathpaul -->
                     <div class="dev-card">
-                        <div class="dev-card-glow dev-glow-emerald"></div>
-                        <div class="dev-card-topbar dev-topbar-emerald"></div>
+                        <div class="dev-card-glow dev-glow-emerald" aria-hidden="true"></div>
+                        <div class="dev-card-topbar dev-topbar-emerald" aria-hidden="true"></div>
                         <div class="relative z-10 flex flex-col items-center text-center h-full">
                             <div class="dev-avatar-ring dev-ring-emerald">
                                 <div class="dev-avatar-wrap">
-                                    <img class="dev-avatar-img" alt="Pranay Kathpaul"
+                                    <img class="dev-avatar-img" alt="Portrait of Pranay Kathpaul"
                                          src="WhatsApp Image 2026-09-26 at 3.41.05 AM.jpeg"
+                                         loading="lazy"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div class="dev-avatar dev-avatar-emerald" style="display:none;">PK</div>
+                                    <div class="dev-avatar dev-avatar-emerald" style="display:none;" aria-hidden="true">PK</div>
                                 </div>
-                                <span class="dev-avatar-badge dev-badge-emerald" title="Interface Engineer"><i class="fa-solid fa-layer-group"></i></span>
+                                <span class="dev-avatar-badge dev-badge-emerald" title="Interface Engineer" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
                             </div>
                             <h3 class="dev-name">Pranay Kathpaul</h3>
-                            <span class="dev-role-pill dev-role-emerald"><i class="fa-solid fa-palette"></i> Interface & Interactions</span>
-                            <p class="dev-university"><i class="fa-solid fa-graduation-cap"></i> B.Tech CSE &middot; Lovely Professional University</p>
+                            <span class="dev-role-pill dev-role-emerald"><i class="fa-solid fa-palette" aria-hidden="true"></i> Interface & Interactions</span>
+                            <p class="dev-university"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> B.Tech CSE &middot; Lovely Professional University</p>
                             <p class="dev-bio">
                                 Pranay contributed to Vault's interface and interactive features, helping shape how the
                                 cluster's real-time state and chaos events come to life on screen.
@@ -782,10 +819,10 @@
                             </div>
                             <div class="flex gap-2 pt-4 border-t border-gray-800 w-full mt-auto">
                                 <a href="https://www.linkedin.com/in/pranay-kathpaul-633600407/" target="_blank" rel="noopener noreferrer" class="social-btn social-linkedin">
-                                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                                    <i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn
                                 </a>
                                 <a href="https://github.com/pranaykathpaul2008-ctrl" target="_blank" rel="noopener noreferrer" class="social-btn social-github">
-                                    <i class="fa-brands fa-github"></i> GitHub
+                                    <i class="fa-brands fa-github" aria-hidden="true"></i> GitHub
                                 </a>
                             </div>
                         </div>
@@ -793,36 +830,37 @@
 
                     <!-- Developer 3: Chandan Singh -->
                     <div class="dev-card">
-                        <div class="dev-card-glow dev-glow-purple"></div>
-                        <div class="dev-card-topbar dev-topbar-purple"></div>
+                        <div class="dev-card-glow dev-glow-purple" aria-hidden="true"></div>
+                        <div class="dev-card-topbar dev-topbar-purple" aria-hidden="true"></div>
                         <div class="relative z-10 flex flex-col items-center text-center h-full">
                             <div class="dev-avatar-ring dev-ring-purple">
                                 <div class="dev-avatar-wrap">
-                                    <img class="dev-avatar-img" alt="Chandan Singh"
+                                    <img class="dev-avatar-img" alt="Portrait of Chandan Singh"
                                          src="WhatsApp Image 2026-09-26 at 3.43.14 AM.jpeg"
+                                         loading="lazy"
                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div class="dev-avatar dev-avatar-purple" style="display:none;">CS</div>
+                                    <div class="dev-avatar dev-avatar-purple" style="display:none;" aria-hidden="true">CS</div>
                                 </div>
-                                <span class="dev-avatar-badge dev-badge-purple" title="Chaos & Telemetry"><i class="fa-solid fa-bolt"></i></span>
+                                <span class="dev-avatar-badge dev-badge-purple" title="Chaos & Telemetry" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
                             </div>
                             <h3 class="dev-name">Chandan Singh</h3>
-                            <span class="dev-role-pill dev-role-purple"><i class="fa-solid fa-skull-crossbones"></i> Chaos & Telemetry</span>
-                            <p class="dev-university"><i class="fa-solid fa-graduation-cap"></i> B.Tech CSE &middot; Lovely Professional University</p>
+                            <span class="dev-role-pill dev-role-purple"><i class="fa-solid fa-skull-crossbones" aria-hidden="true"></i> Chaos & Telemetry</span>
+                            <p class="dev-university"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> B.Tech CSE &middot; Lovely Professional University</p>
                             <p class="dev-bio">
                                 Chandan worked on Vault's chaos-engineering and telemetry tooling, helping simulate
                                 real-world failure scenarios and visualize the cluster's health under stress.
                             </p>
                             <div class="flex flex-wrap gap-1.5 justify-center my-4">
                                 <span class="skill-chip">HTML</span>
-                                <span class="skill-chip">CSS</span> <!-- frkfgit commit -m "update"-->
+                                <span class="skill-chip">CSS</span>
                                 <span class="skill-chip">JavaScript</span>
                             </div>
                             <div class="flex gap-2 pt-4 border-t border-gray-800 w-full mt-auto">
-                                <span class="social-btn social-linkedin disabled" role="button" aria-disabled="true" title="Profile unavailable">
-                                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                                <span class="social-btn social-linkedin disabled" role="button" aria-disabled="true" aria-label="LinkedIn profile unavailable" title="Profile unavailable">
+                                    <i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn
                                 </span>
                                 <a href="https://github.com/Chandan77480" target="_blank" rel="noopener noreferrer" class="social-btn social-github">
-                                    <i class="fa-brands fa-github"></i> GitHub
+                                    <i class="fa-brands fa-github" aria-hidden="true"></i> GitHub
                                 </a>
                             </div>
                         </div>
@@ -837,40 +875,40 @@
     <footer class="glass-panel border-t border-gray-800 z-30 relative">
         <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between font-mono text-xs border-b border-gray-800/60">
             <div class="flex items-center gap-2 text-cyan-400">
-                <i class="fa-solid fa-terminal text-xs"></i>
+                <i class="fa-solid fa-terminal text-xs" aria-hidden="true"></i>
                 <span class="font-bold">SYSTEM EVENT LOG & gRPC STREAM</span>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="clearTerminalLogs()" class="text-gray-500 hover:text-gray-300 text-[10px] transition-all">Clear Logs</button>
-                <button onclick="toggleTerminal()" class="text-gray-400 hover:text-white transition-all">
-                    <i id="terminal-toggle-icon" class="fa-solid fa-chevron-up text-[10px]"></i>
+                <button type="button" onclick="clearTerminalLogs()" class="text-gray-500 hover:text-gray-300 text-[10px] transition-all">Clear Logs</button>
+                <button type="button" id="terminal-toggle-btn" onclick="toggleTerminal()" class="text-gray-400 hover:text-white transition-all" aria-expanded="true" aria-controls="terminal-drawer" aria-label="Toggle system event log">
+                    <i id="terminal-toggle-icon" class="fa-solid fa-chevron-up text-[10px]" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
 
-        <div id="terminal-drawer" class="max-w-7xl mx-auto px-4 py-3 font-mono text-[11px] h-36 overflow-y-auto space-y-1 bg-gray-950/90">
+        <div id="terminal-drawer" class="max-w-7xl mx-auto px-4 py-3 font-mono text-[11px] h-36 overflow-y-auto space-y-1 bg-gray-950/90" role="log" aria-live="polite" aria-label="System event log">
             <!-- Dynamic gRPC heartbeats log entries -->
         </div>
     </footer>
 
     <!-- ================= UPLOAD MODAL ================= -->
-    <div id="upload-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div id="upload-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
         <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-cyan-500/30 space-y-5 relative modal-pop">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-                <h3 class="font-mono text-sm font-bold text-cyan-400 flex items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> UPLOAD OBJECT TO CLUSTER
+                <h3 id="upload-modal-title" class="font-mono text-sm font-bold text-cyan-400 flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> UPLOAD OBJECT TO CLUSTER
                 </h3>
-                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+                <button type="button" onclick="closeUploadModal()" class="text-gray-400 hover:text-white text-lg" aria-label="Close upload dialog">&times;</button>
             </div>
 
             <div class="space-y-4 text-xs font-mono">
                 <div>
-                    <label class="block text-gray-400 mb-1">OBJECT FILENAME</label>
-                    <input type="text" id="modal-filename" value="ai-model-weights-v3.bin" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-cyan-400">
+                    <label for="modal-filename" class="block text-gray-400 mb-1">OBJECT FILENAME</label>
+                    <input type="text" id="modal-filename" value="ai-model-weights-v3.bin" maxlength="128" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-cyan-400">
                 </div>
 
                 <div>
-                    <label class="block text-gray-400 mb-1">SIMULATED FILE SIZE (MB)</label>
+                    <label for="modal-filesize" class="block text-gray-400 mb-1">SIMULATED FILE SIZE (MB)</label>
                     <input type="number" id="modal-filesize" value="256" min="1" max="2048" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-cyan-400">
                 </div>
 
@@ -879,14 +917,14 @@
                     <p>File will be split into 64MB binary chunks, hashed via SHA-256, and stored across N=3 independent availability zone nodes.</p>
                 </div>
 
-                <input type="file" id="mock-file-input" onchange="handleFileSelect(event)" class="hidden">
+                <input type="file" id="mock-file-input" onchange="handleFileSelect(event)" class="hidden" aria-label="Browse a local file to simulate uploading">
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-800">
-                <button onclick="triggerFileInput()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-mono text-xs rounded-lg transition-all ripple-btn">
+                <button type="button" onclick="triggerFileInput()" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-mono text-xs rounded-lg transition-all ripple-btn">
                     Browse Local File
                 </button>
-                <button onclick="submitModalUpload()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-cyan-500/20 transition-all ripple-btn">
+                <button type="button" onclick="submitModalUpload()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-cyan-500/20 transition-all ripple-btn">
                     Commit to Vault Cluster
                 </button>
             </div>
@@ -894,23 +932,23 @@
     </div>
 
     <!-- ================= LOGIN / ACCOUNT MODAL ================= -->
-    <div id="login-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div id="login-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
         <div class="glass-panel rounded-2xl max-w-sm w-full p-6 border border-amber-500/30 space-y-5 relative modal-pop">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-                <h3 class="font-mono text-sm font-bold text-amber-400 flex items-center gap-2">
-                    <i class="fa-solid fa-user"></i> SIGN IN TO VAULT
+                <h3 id="login-modal-title" class="font-mono text-sm font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-user" aria-hidden="true"></i> SIGN IN TO VAULT
                 </h3>
-                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+                <button type="button" onclick="closeLoginModal()" class="text-gray-400 hover:text-white text-lg" aria-label="Close sign-in dialog">&times;</button>
             </div>
             <p class="text-[11px] text-gray-400 font-mono">Your name is shown in the header, and stamped onto screenshots and the generated PDF guide. Nothing leaves your browser.</p>
             <div class="space-y-3 text-xs font-mono">
                 <div>
-                    <label class="block text-gray-400 mb-1">YOUR NAME</label>
-                    <input type="text" id="login-name-input" placeholder="e.g. Priya Sharma" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-amber-400" onkeydown="if(event.key==='Enter') submitLogin();">
+                    <label for="login-name-input" class="block text-gray-400 mb-1">YOUR NAME</label>
+                    <input type="text" id="login-name-input" placeholder="e.g. Priya Sharma" maxlength="60" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-amber-400" onkeydown="if(event.key==='Enter') submitLogin();">
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-800">
-                <button onclick="submitLogin()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-amber-500/20 transition-all ripple-btn">
+                <button type="button" onclick="submitLogin()" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-black font-semibold font-mono text-xs rounded-lg shadow-lg shadow-amber-500/20 transition-all ripple-btn">
                     Sign In
                 </button>
             </div>
@@ -918,13 +956,13 @@
     </div>
 
     <!-- ================= KEYBOARD SHORTCUTS MODAL ================= -->
-    <div id="shortcuts-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div id="shortcuts-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
         <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-cyan-500/30 space-y-4 relative modal-pop">
             <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-                <h3 class="font-mono text-sm font-bold text-cyan-400 flex items-center gap-2">
-                    <i class="fa-solid fa-keyboard"></i> KEYBOARD SHORTCUTS
+                <h3 id="shortcuts-modal-title" class="font-mono text-sm font-bold text-cyan-400 flex items-center gap-2">
+                    <i class="fa-solid fa-keyboard" aria-hidden="true"></i> KEYBOARD SHORTCUTS
                 </h3>
-                <button onclick="closeShortcutsModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+                <button type="button" onclick="closeShortcutsModal()" class="text-gray-400 hover:text-white text-lg" aria-label="Close shortcuts dialog">&times;</button>
             </div>
             <div id="shortcuts-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
                 <!-- Populated via JS -->

@@ -21,6 +21,19 @@
    ========================================================= */
 
 /* ---------------------------------------------------------
+   0. Security helpers (HTML escaping for any user-supplied
+   text that is inserted via innerHTML, to prevent XSS)
+   --------------------------------------------------------- */
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/* ---------------------------------------------------------
    1. Utility Functions
    --------------------------------------------------------- */
 function simpleHash(str) {
@@ -306,7 +319,7 @@ class VaultClusterEngine {
         line.innerHTML = `
             <span class="text-gray-500 font-mono">[${time}]</span>
             <span class="${colorClass} font-bold">[${subsystem}]</span>
-            <span class="text-gray-300 flex-1">${msg}</span>
+            <span class="text-gray-300 flex-1">${escapeHtml(msg)}</span>
         `;
 
         terminal.appendChild(line);
@@ -359,6 +372,7 @@ class VaultClusterEngine {
         this.raft.updateUI();
         this.merkleEngine.renderMerkleGraphic();
         this.updateHeaderStats();
+        if (typeof vaultSearch !== 'undefined') vaultSearch.invalidateIndex();
     }
 
     updateUI() {
@@ -386,6 +400,11 @@ class VaultClusterEngine {
             ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75';
             dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-rose-500';
         }
+
+        const statusWrap = statusText ? statusText.closest('[role="status"]') : null;
+        if (statusWrap) {
+            statusWrap.setAttribute('aria-label', `Cluster health: ${statusText.innerText}, ${quorumElem ? quorumElem.innerText : ''}`);
+        }
     }
 
     renderNodeCards() {
@@ -396,14 +415,15 @@ class VaultClusterEngine {
             const isDead = n.status === 'Dead';
             const statusColor = isDead ? 'text-rose-400 border-rose-500/30 bg-rose-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
             const isLeader = this.raft.leader === n.id;
+            const actionLabel = isDead ? `Start ${n.id}` : `Kill ${n.id}`;
 
             return `
-                <div id="node-card-${n.id}" class="glass-card hover-lift rounded-xl p-4 border border-gray-800 flex flex-col justify-between space-y-3 relative overflow-hidden transition-all ${isDead ? 'opacity-50' : ''}">
+                <div id="node-card-${n.id}" class="glass-card hover-lift rounded-xl p-4 border border-gray-800 flex flex-col justify-between space-y-3 relative overflow-hidden transition-all ${isDead ? 'opacity-50' : ''}" role="group" aria-label="${n.id}, ${n.az}, ${n.status}">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="font-bold font-mono text-sm text-gray-200">${n.id}</span>
                             <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700">${n.az}</span>
-                            ${isLeader ? '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold"><i class="fa-solid fa-crown text-[9px]"></i> LEADER</span>' : ''}
+                            ${isLeader ? '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold"><i class="fa-solid fa-crown text-[9px]" aria-hidden="true"></i> LEADER</span>' : ''}
                         </div>
                         <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${statusColor}">${n.status}</span>
                     </div>
@@ -411,20 +431,20 @@ class VaultClusterEngine {
                     <div class="space-y-2 font-mono text-[11px]">
                         <div>
                             <div class="flex justify-between text-gray-400 mb-0.5">
-                                <span>CPU LOAD</span>
+                                <span id="cpu-label-${n.id}">CPU LOAD</span>
                                 <span class="text-gray-200">${n.cpu}%</span>
                             </div>
-                            <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
+                            <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-labelledby="cpu-label-${n.id}" aria-valuenow="${n.cpu}" aria-valuemin="0" aria-valuemax="100">
                                 <div class="bg-cyan-500 h-1.5 rounded-full" style="width: ${n.cpu}%"></div>
                             </div>
                         </div>
 
                         <div>
                             <div class="flex justify-between text-gray-400 mb-0.5">
-                                <span>STORAGE UTIL</span>
+                                <span id="storage-label-${n.id}">STORAGE UTIL</span>
                                 <span class="text-gray-200">${n.storage}%</span>
                             </div>
-                            <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
+                            <div class="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden" role="progressbar" aria-labelledby="storage-label-${n.id}" aria-valuenow="${n.storage}" aria-valuemin="0" aria-valuemax="100">
                                 <div class="bg-purple-500 h-1.5 rounded-full" style="width: ${n.storage}%"></div>
                             </div>
                         </div>
@@ -432,8 +452,8 @@ class VaultClusterEngine {
 
                     <div class="pt-2 border-t border-gray-800 flex items-center justify-between text-xs font-mono">
                         <span class="text-gray-500 text-[10px]">${n.activeChunks} Chunks Stored</span>
-                        <button onclick="vaultEngine.toggleNodeStatus('${n.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-[11px] text-gray-300 transition-all ripple-btn">
-                            ${isDead ? '<i class="fa-solid fa-power-off text-emerald-400"></i> Start' : '<i class="fa-solid fa-skull text-rose-400"></i> Kill'}
+                        <button type="button" onclick="vaultEngine.toggleNodeStatus('${n.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded text-[11px] text-gray-300 transition-all ripple-btn" aria-label="${actionLabel}">
+                            ${isDead ? '<i class="fa-solid fa-power-off text-emerald-400" aria-hidden="true"></i> Start' : '<i class="fa-solid fa-skull text-rose-400" aria-hidden="true"></i> Kill'}
                         </button>
                     </div>
                 </div>
@@ -445,13 +465,16 @@ class VaultClusterEngine {
         const container = document.getElementById('objects-list-container');
         if (!container) return;
 
-        container.innerHTML = this.objects.map(obj => `
-            <div id="object-card-${obj.name.replace(/[^a-zA-Z0-9]/g, '-')}" class="glass-card hover-lift rounded-xl p-4 border border-gray-800 space-y-3">
+        container.innerHTML = this.objects.map(obj => {
+            const safeName = escapeHtml(obj.name);
+            const domId = obj.name.replace(/[^a-zA-Z0-9]/g, '-');
+            return `
+            <div id="object-card-${domId}" class="glass-card hover-lift rounded-xl p-4 border border-gray-800 space-y-3">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-file-code text-cyan-400 text-lg"></i>
+                        <i class="fa-solid fa-file-code text-cyan-400 text-lg" aria-hidden="true"></i>
                         <div>
-                            <span class="font-bold font-mono text-xs text-gray-200 block">${obj.name}</span>
+                            <span class="font-bold font-mono text-xs text-gray-200 block">${safeName}</span>
                             <span class="text-[10px] font-mono text-gray-400">${obj.size} MB | ${obj.chunks.length} Chunks</span>
                         </div>
                     </div>
@@ -469,7 +492,7 @@ class VaultClusterEngine {
                                 Primary: <span class="text-cyan-400">${c.primaryNode}</span> | Replicas: ${c.replicaNodes.join(', ')}
                             </div>
                             <div class="pt-1 flex justify-end">
-                                <button onclick="vaultEngine.injectBitRot('${c.id}')" class="text-[10px] text-rose-400 hover:text-rose-300 underline">
+                                <button type="button" onclick="vaultEngine.injectBitRot('${c.id}')" class="text-[10px] text-rose-400 hover:text-rose-300 underline" aria-label="Inject bit-rot corruption into chunk ${c.id}">
                                     Inject Bit-Rot Corruption
                                 </button>
                             </div>
@@ -477,7 +500,8 @@ class VaultClusterEngine {
                     `).join('')}
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
 
     drawHashRing() {
@@ -529,6 +553,9 @@ class VaultClusterEngine {
             ctx.lineWidth = 2;
             ctx.stroke();
         });
+
+        const healthy = this.nodes.filter(n => n.status === 'Healthy').length;
+        canvas.setAttribute('aria-label', `Consistent hash ring showing ${this.nodes.length} nodes across 3 availability zones, ${healthy} currently healthy.`);
     }
 
     renderTelemetryChart() {
@@ -559,6 +586,7 @@ class VaultClusterEngine {
         const latestIops = this.telemetryHistory[this.telemetryHistory.length - 1];
         const iopsElem = document.getElementById('telemetry-iops');
         if (iopsElem) iopsElem.innerText = `${latestIops.toLocaleString()} ops/s`;
+        canvas.setAttribute('aria-label', `Cluster IOPS over time, currently ${latestIops.toLocaleString()} operations per second.`);
     }
 }
 
@@ -573,6 +601,8 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(b => {
         b.classList.remove('active', 'border-cyan-400', 'text-cyan-400', 'bg-gray-900/60');
         b.classList.add('border-transparent', 'text-gray-400');
+        b.setAttribute('aria-selected', 'false');
+        b.setAttribute('tabindex', '-1');
     });
     document.querySelectorAll('.tab-view').forEach(v => {
         v.classList.add('hidden');
@@ -585,6 +615,8 @@ function switchTab(tabId) {
     if (targetBtn) {
         targetBtn.classList.add('active', 'border-cyan-400', 'text-cyan-400', 'bg-gray-900/60');
         targetBtn.classList.remove('border-transparent', 'text-gray-400');
+        targetBtn.setAttribute('aria-selected', 'true');
+        targetBtn.setAttribute('tabindex', '0');
     }
     if (targetView) {
         targetView.classList.remove('hidden');
@@ -639,13 +671,16 @@ function handleChaosSelect(val) {
 function toggleTerminal() {
     const drawer = document.getElementById('terminal-drawer');
     const icon = document.getElementById('terminal-toggle-icon');
-    if (drawer.classList.contains('hidden')) {
+    const btn = document.getElementById('terminal-toggle-btn');
+    const isHidden = drawer.classList.contains('hidden');
+    if (isHidden) {
         drawer.classList.remove('hidden');
         icon.className = 'fa-solid fa-chevron-up text-[10px]';
     } else {
         drawer.classList.add('hidden');
         icon.className = 'fa-solid fa-chevron-down text-[10px]';
     }
+    if (btn) btn.setAttribute('aria-expanded', String(isHidden));
 }
 
 function clearTerminalLogs() {
@@ -653,17 +688,37 @@ function clearTerminalLogs() {
     if (terminal) terminal.innerHTML = '';
 }
 
+let lastFocusedElement = null;
+
+function trapFocus(modalEl) {
+    if (!modalEl) return;
+    lastFocusedElement = document.activeElement;
+    const focusables = modalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusables.length) focusables[0].focus();
+}
+
+function releaseFocus() {
+    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+        lastFocusedElement.focus();
+    }
+    lastFocusedElement = null;
+}
+
 function triggerUploadModal() {
-    document.getElementById('upload-modal').classList.remove('hidden');
+    const modal = document.getElementById('upload-modal');
+    modal.classList.remove('hidden');
+    trapFocus(modal);
 }
 
 function closeUploadModal() {
     document.getElementById('upload-modal').classList.add('hidden');
+    releaseFocus();
 }
 
 function submitModalUpload() {
-    const name = document.getElementById('modal-filename').value || 'object.bin';
-    const size = parseInt(document.getElementById('modal-filesize').value) || 128;
+    const nameInput = document.getElementById('modal-filename');
+    const name = (nameInput.value || 'object.bin').trim().slice(0, 128) || 'object.bin';
+    const size = Math.min(Math.max(parseInt(document.getElementById('modal-filesize').value) || 128, 1), 100000);
     uploadPresetObject(name, size);
     closeUploadModal();
 }
@@ -711,11 +766,17 @@ class ParticleField {
         this.particles = [];
         this.mouse = { x: null, y: null, active: false };
         this.colors = ['#06b6d4', '#10b981', '#a855f7', '#f59e0b', '#f43f5e'];
+        this.reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this._resizeTimer = null;
 
         this.resize();
         this.initParticles();
         this.bindEvents();
-        this.loop();
+        if (!this.reducedMotion) {
+            this.loop();
+        } else {
+            this.renderStaticFrame();
+        }
     }
 
     resize() {
@@ -740,13 +801,36 @@ class ParticleField {
     }
 
     bindEvents() {
-        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('resize', () => {
+            clearTimeout(this._resizeTimer);
+            this._resizeTimer = setTimeout(() => {
+                this.resize();
+                if (this.reducedMotion) this.renderStaticFrame();
+            }, 150);
+        }, { passive: true });
         window.addEventListener('mousemove', (e) => {
             this.mouse.x = e.clientX;
             this.mouse.y = e.clientY;
             this.mouse.active = true;
-        });
-        window.addEventListener('mouseleave', () => { this.mouse.active = false; });
+        }, { passive: true });
+        window.addEventListener('mouseleave', () => { this.mouse.active = false; }, { passive: true });
+    }
+
+    renderStaticFrame() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const isGreen = document.documentElement.getAttribute('data-theme') === 'light';
+        const grad = ctx.createRadialGradient(w * 0.5, h * 0.15, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
+        if (isGreen) {
+            grad.addColorStop(0, '#e7f6ec');
+            grad.addColorStop(1, '#c7ecd3');
+        } else {
+            grad.addColorStop(0, '#0f1729');
+            grad.addColorStop(1, '#05070d');
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
     }
 
     loop() {
@@ -826,6 +910,7 @@ class BootSequence {
         this.pctEl = document.getElementById('boot-progress-pct');
         this.labelEl = document.getElementById('boot-progress-label');
         this.screenEl = document.getElementById('boot-screen');
+        this.reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         this.lines = [
             { tag: 'INIT', text: 'Booting Vault distributed runtime…' },
@@ -840,6 +925,11 @@ class BootSequence {
     async run() {
         if (!this.screenEl) return;
         this.hidden = false;
+
+        if (this.reducedMotion) {
+            this.hide();
+            return;
+        }
 
         this.safetyTimer = setTimeout(() => this.hide(), 6000);
 
@@ -866,7 +956,7 @@ class BootSequence {
         if (!this.logEl) return;
         const div = document.createElement('div');
         div.className = 'boot-log-line';
-        div.innerHTML = `<span class="tag">[${line.tag}]</span> <span class="${line.tag === 'READY' ? 'ok' : ''}">${line.text}</span>`;
+        div.innerHTML = `<span class="tag">[${line.tag}]</span> <span class="${line.tag === 'READY' ? 'ok' : ''}">${escapeHtml(line.text)}</span>`;
         this.logEl.appendChild(div);
         this.logEl.scrollTop = this.logEl.scrollHeight;
     }
@@ -880,6 +970,7 @@ class BootSequence {
         if (!this.screenEl || this.hidden) return;
         this.hidden = true;
         this.screenEl.classList.add('boot-hidden');
+        this.screenEl.setAttribute('aria-hidden', 'true');
         setTimeout(() => {
             this.screenEl.style.display = 'none';
             try {
@@ -1020,6 +1111,21 @@ class GuidedTour {
             if (e.key === 'Escape') this.end();
             if (e.key === 'ArrowRight') this.next();
             if (e.key === 'ArrowLeft') this.prev();
+            if (e.key === 'Tab') {
+                // Keep keyboard focus inside the tour tooltip while it is open.
+                const focusables = this.tooltip ? this.tooltip.querySelectorAll('button, [href]') : [];
+                if (focusables.length) {
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
         });
     }
 
@@ -1034,15 +1140,15 @@ class GuidedTour {
         this.root.innerHTML = `
             <div class="tour-backdrop" id="tour-backdrop"></div>
             <div class="tour-spotlight" id="tour-spotlight"></div>
-            <div class="tour-tooltip" id="tour-tooltip">
-                <h4 id="tour-title"><i class="fa-solid fa-compass"></i> <span></span><span class="tour-step-count" id="tour-step-count"></span></h4>
+            <div class="tour-tooltip" id="tour-tooltip" role="dialog" aria-modal="true" aria-labelledby="tour-title-text" aria-describedby="tour-text">
+                <h4 id="tour-title"><i class="fa-solid fa-compass" aria-hidden="true"></i> <span id="tour-title-text"></span><span class="tour-step-count" id="tour-step-count"></span></h4>
                 <p id="tour-text"></p>
                 <div class="tour-tooltip-footer">
                     <div class="tour-dots" id="tour-dots"></div>
                     <div class="tour-btn-group">
-                        <span class="tour-skip" onclick="guidedTour.end()">Skip</span>
-                        <button class="tour-nav-btn" id="tour-prev-btn" onclick="guidedTour.prev()">Back</button>
-                        <button class="tour-nav-btn primary" id="tour-next-btn" onclick="guidedTour.next()">Next</button>
+                        <span class="tour-skip" onclick="guidedTour.end()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){guidedTour.end();}">Skip</span>
+                        <button type="button" class="tour-nav-btn" id="tour-prev-btn" onclick="guidedTour.prev()">Back</button>
+                        <button type="button" class="tour-nav-btn primary" id="tour-next-btn" onclick="guidedTour.next()">Next</button>
                     </div>
                 </div>
             </div>
@@ -1101,7 +1207,7 @@ class GuidedTour {
                 this.tooltip.style.top = top + 'px';
                 this.tooltip.style.left = left + 'px';
 
-                document.getElementById('tour-title').querySelector('span').textContent = step.title;
+                document.getElementById('tour-title-text').textContent = step.title;
                 document.getElementById('tour-text').textContent = step.text;
                 document.getElementById('tour-step-count').textContent = `${index + 1}/${this.steps.length}`;
 
@@ -1109,6 +1215,8 @@ class GuidedTour {
 
                 document.getElementById('tour-prev-btn').style.visibility = index === 0 ? 'hidden' : 'visible';
                 document.getElementById('tour-next-btn').textContent = index === this.steps.length - 1 ? 'Finish' : 'Next';
+
+                document.getElementById('tour-next-btn').focus();
             }, target ? 260 : 0);
         }, step.tab && !skipTabSwitch ? 260 : 0);
     }
@@ -1132,6 +1240,7 @@ class GuidedTour {
         this.active = false;
         localStorage.setItem('vault_tour_seen', '1');
         if (this.root) this.root.innerHTML = '';
+        releaseFocus();
     }
 }
 
@@ -1146,9 +1255,15 @@ const vaultTheme = {
         document.documentElement.classList.toggle('dark', theme === 'dark');
         const icon = document.getElementById('theme-toggle-icon');
         const label = document.getElementById('theme-toggle-label');
+        const btn = document.getElementById('theme-toggle-btn');
         if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-moon text-cyan-300' : 'fa-solid fa-leaf text-emerald-500';
         if (label) label.textContent = theme === 'dark' ? 'Dark Mode' : 'Green Mode';
-        localStorage.setItem('vault_theme', theme);
+        if (btn) btn.setAttribute('aria-pressed', String(theme === 'light'));
+        try {
+            localStorage.setItem('vault_theme', theme);
+        } catch (e) {
+            console.warn('Vault: unable to persist theme preference —', e);
+        }
     },
     toggle() {
         const current = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1160,7 +1275,12 @@ const vaultTheme = {
         // causing the site to open in the light/white theme on some
         // devices. Only an EXPLICIT earlier choice (saved via the toggle
         // button) will make the site open in Green Mode instead.
-        const saved = localStorage.getItem('vault_theme') || 'dark';
+        let saved = 'dark';
+        try {
+            saved = localStorage.getItem('vault_theme') || 'dark';
+        } catch (e) {
+            console.warn('Vault: unable to read stored theme preference —', e);
+        }
         this.apply(saved);
     }
 };
@@ -1169,28 +1289,43 @@ const vaultTheme = {
    11. Account system
    --------------------------------------------------------- */
 function openLoginModal() {
-    document.getElementById('login-modal').classList.remove('hidden');
+    const modal = document.getElementById('login-modal');
+    modal.classList.remove('hidden');
+    trapFocus(modal);
     setTimeout(() => document.getElementById('login-name-input').focus(), 100);
 }
 function closeLoginModal() {
     document.getElementById('login-modal').classList.add('hidden');
+    releaseFocus();
 }
 function submitLogin() {
     const input = document.getElementById('login-name-input');
-    const name = (input.value || '').trim();
+    const name = (input.value || '').trim().slice(0, 60);
     if (!name) { input.focus(); return; }
-    localStorage.setItem('vault_user_name', name);
+    try {
+        localStorage.setItem('vault_user_name', name);
+    } catch (e) {
+        console.warn('Vault: unable to persist account name —', e);
+    }
     renderAccountWidget();
     closeLoginModal();
     vaultEngine.logEvent('SUCCESS', 'ACCOUNT', `Signed in as ${name}.`);
 }
 function logoutUser() {
-    localStorage.removeItem('vault_user_name');
+    try {
+        localStorage.removeItem('vault_user_name');
+    } catch (e) {
+        console.warn('Vault: unable to clear stored account name —', e);
+    }
     renderAccountWidget();
     vaultEngine.logEvent('INFO', 'ACCOUNT', 'Signed out.');
 }
 function getCurrentUserName() {
-    return localStorage.getItem('vault_user_name') || null;
+    try {
+        return localStorage.getItem('vault_user_name') || null;
+    } catch (e) {
+        return null;
+    }
 }
 function renderAccountWidget() {
     const name = getCurrentUserName();
@@ -1213,23 +1348,32 @@ function renderAccountWidget() {
    12. Global search
    --------------------------------------------------------- */
 const vaultSearch = {
+    _cachedIndex: null,
+
+    invalidateIndex() {
+        this._cachedIndex = null;
+    },
+
     buildIndex() {
+        if (this._cachedIndex) return this._cachedIndex;
+
         const items = [];
         vaultEngine.nodes.forEach(n => items.push({
             type: 'Node', title: n.id, meta: `${n.az} · ${n.status} · ${n.cpu}% CPU`,
             tab: 'topology', targetId: `node-card-${n.id}`
         }));
         vaultEngine.objects.forEach(o => {
+            const domId = o.name.replace(/[^a-zA-Z0-9]/g, '-');
             items.push({
                 type: 'Object', title: o.name, meta: `${o.size} MB · ${o.chunks.length} chunks`,
-                tab: 'objects', targetId: `object-card-${o.name.replace(/[^a-zA-Z0-9]/g, '-')}`
+                tab: 'objects', targetId: `object-card-${domId}`
             });
             o.chunks.forEach(c => items.push({
                 type: 'Chunk', title: c.id, meta: `in ${o.name} · primary ${c.primaryNode}`,
-                tab: 'objects', targetId: `object-card-${o.name.replace(/[^a-zA-Z0-9]/g, '-')}`
+                tab: 'objects', targetId: `object-card-${domId}`
             }));
         });
-        TIPS_CONTENT.forEach((t, i) => items.push({
+        TIPS_CONTENT.forEach(t => items.push({
             type: 'Tip', title: t.title, meta: t.body.slice(0, 60) + '…',
             tab: 'tips', targetId: null
         }));
@@ -1237,12 +1381,20 @@ const vaultSearch = {
          'Vault Explained', 'Telemetry & IOPS', 'Tips & Best Practices', 'About & Team'].forEach((title, i) => {
             items.push({ type: 'Section', title, meta: 'Jump to this tab', tab: TAB_IDS[i], targetId: null });
         });
+
+        this._cachedIndex = items;
         return items;
     },
     onInput(query) {
         const box = document.getElementById('search-results');
+        const input = document.getElementById('global-search-input');
         const q = query.trim().toLowerCase();
-        if (!q) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+        if (!q) {
+            box.classList.add('hidden');
+            box.innerHTML = '';
+            if (input) input.setAttribute('aria-expanded', 'false');
+            return;
+        }
 
         const index = this.buildIndex();
         const matches = index.filter(item =>
@@ -1250,17 +1402,18 @@ const vaultSearch = {
         ).slice(0, 8);
 
         if (matches.length === 0) {
-            box.innerHTML = `<div class="search-result-empty">No results for "${query}"</div>`;
+            box.innerHTML = `<div class="search-result-empty">No results for "${escapeHtml(query)}"</div>`;
         } else {
             box.innerHTML = matches.map((m, i) => `
-                <div class="search-result-item" onclick="vaultSearch.select(${i})">
-                    <span class="sr-title">${m.title} <span class="text-[9px] text-gray-500">(${m.type})</span></span>
-                    <span class="sr-meta">${m.meta}</span>
+                <div class="search-result-item" onclick="vaultSearch.select(${i})" role="option" tabindex="0" onkeydown="if(event.key==='Enter'){vaultSearch.select(${i});}">
+                    <span class="sr-title">${escapeHtml(m.title)} <span class="text-[9px] text-gray-500">(${escapeHtml(m.type)})</span></span>
+                    <span class="sr-meta">${escapeHtml(m.meta)}</span>
                 </div>
             `).join('');
             this._lastMatches = matches;
         }
         box.classList.remove('hidden');
+        if (input) input.setAttribute('aria-expanded', 'true');
     },
     select(i) {
         const m = this._lastMatches[i];
@@ -1281,12 +1434,14 @@ const vaultSearch = {
     }
 };
 
-document.addEventListener('click', (e) => {
-    const wrap = document.querySelector('.search-wrap');
-    if (wrap && !wrap.contains(e.target)) {
-        document.getElementById('search-results').classList.add('hidden');
-    }
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', (e) => {
+        const wrap = document.querySelector('.search-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById('search-results').classList.add('hidden');
+        }
+    });
+}
 
 /* ---------------------------------------------------------
    13. Tools: screenshot + PDF guide generator
@@ -1494,14 +1649,17 @@ function openShortcutsModal() {
     const list = document.getElementById('shortcuts-list');
     list.innerHTML = SHORTCUTS.map(s => `
         <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-900/60 border border-gray-800">
-            <span class="text-gray-300">${s.desc}</span>
-            <kbd class="kbd-chip">${s.keys}</kbd>
+            <span class="text-gray-300">${escapeHtml(s.desc)}</span>
+            <kbd class="kbd-chip">${escapeHtml(s.keys)}</kbd>
         </div>
     `).join('');
-    document.getElementById('shortcuts-modal').classList.remove('hidden');
+    const modal = document.getElementById('shortcuts-modal');
+    modal.classList.remove('hidden');
+    trapFocus(modal);
 }
 function closeShortcutsModal() {
     document.getElementById('shortcuts-modal').classList.add('hidden');
+    releaseFocus();
 }
 
 function initKeyboardShortcuts() {
@@ -1625,10 +1783,10 @@ function renderTipsGrid() {
     if (!grid) return;
     grid.innerHTML = TIPS_CONTENT.map(t => `
         <div class="tip-card hover-lift">
-            <i class="fa-solid ${t.icon}"></i>
+            <i class="fa-solid ${t.icon}" aria-hidden="true"></i>
             <div>
-                <div class="font-bold font-mono text-xs text-gray-200 mb-1">${t.title}</div>
-                <div class="text-xs text-gray-400 leading-relaxed">${t.body}</div>
+                <div class="font-bold font-mono text-xs text-gray-200 mb-1">${escapeHtml(t.title)}</div>
+                <div class="text-xs text-gray-400 leading-relaxed">${escapeHtml(t.body)}</div>
             </div>
         </div>
     `).join('');
@@ -1655,8 +1813,144 @@ function initRippleButtons() {
 
         btn.appendChild(span);
         setTimeout(() => span.remove(), 650);
-    });
+    }, { passive: true });
 }
+
+/* ---------------------------------------------------------
+   17. Self-Test Diagnostic Suite
+   ---------------------------------------------------------
+   A lightweight, dependency-free in-app test runner that
+   exercises the pure simulation logic (hashing, the
+   consistent-hash ring, and HTML-escaping) directly in the
+   browser. Runs automatically once on boot and can be
+   re-run any time from the Telemetry & Diagnostics tab.
+   --------------------------------------------------------- */
+function assertEqual(actual, expected, message) {
+    const same = JSON.stringify(actual) === JSON.stringify(expected);
+    if (!same) {
+        throw new Error(message || `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+    }
+}
+function assertTrue(condition, message) {
+    if (!condition) throw new Error(message || 'expected condition to be true');
+}
+
+const vaultTests = {
+    results: [],
+
+    define() {
+        const cases = [];
+        const t = (name, fn) => cases.push({ name, fn });
+
+        t('escapeHtml neutralizes script tags', () => {
+            assertEqual(escapeHtml('<script>alert(1)</script>'), '&lt;script&gt;alert(1)&lt;/script&gt;');
+        });
+        t('escapeHtml neutralizes quotes and ampersands', () => {
+            assertEqual(escapeHtml(`Tom & Jerry's "show"`), 'Tom &amp; Jerry&#39;s &quot;show&quot;');
+        });
+        t('escapeHtml leaves safe filenames unchanged', () => {
+            assertEqual(escapeHtml('ai-model-weights-v2.bin'), 'ai-model-weights-v2.bin');
+        });
+        t('simpleHash is deterministic', () => {
+            assertEqual(simpleHash('Node-01-vnode-0'), simpleHash('Node-01-vnode-0'));
+        });
+        t('simpleHash is always non-negative', () => {
+            assertTrue(simpleHash('any-key-#$%') >= 0);
+        });
+        t('generateHashHex returns a 12-char lowercase hex string', () => {
+            const hex = generateHashHex(42);
+            assertTrue(/^[0-9a-f]{12}$/.test(hex), `got "${hex}"`);
+        });
+        t('ConsistentHashRing starts empty', () => {
+            const ring = new ConsistentHashRing(3);
+            assertEqual(ring.keys.length, 0);
+            assertEqual(ring.getNodesForObject('anything'), []);
+        });
+        t('ConsistentHashRing places `replicas` vnodes per node', () => {
+            const ring = new ConsistentHashRing(3);
+            ring.addNode('Node-01');
+            assertEqual(ring.keys.length, 3);
+        });
+        t('ConsistentHashRing returns distinct replica nodes', () => {
+            const ring = new ConsistentHashRing(3);
+            ['Node-01', 'Node-02', 'Node-03', 'Node-04'].forEach(id => ring.addNode(id));
+            const nodes = ring.getNodesForObject('object-key', 3);
+            assertEqual(nodes.length, 3);
+            assertEqual(new Set(nodes).size, 3);
+        });
+        t('ConsistentHashRing maps the same key to the same nodes', () => {
+            const ring = new ConsistentHashRing(3);
+            ['Node-01', 'Node-02', 'Node-03'].forEach(id => ring.addNode(id));
+            const a = ring.getNodesForObject('ai-model-weights-v2.bin', 3);
+            const b = ring.getNodesForObject('ai-model-weights-v2.bin', 3);
+            assertEqual(a, b);
+        });
+        t('ConsistentHashRing re-routes keys after a node is removed', () => {
+            const ring = new ConsistentHashRing(3);
+            ['Node-01', 'Node-02', 'Node-03'].forEach(id => ring.addNode(id));
+            const before = ring.getNodesForObject('chunk-xyz', 1)[0];
+            ring.removeNode(before);
+            const after = ring.getNodesForObject('chunk-xyz', 1)[0];
+            assertTrue(after !== before, 'key should no longer map to the removed node');
+            assertTrue(['Node-01', 'Node-02', 'Node-03'].includes(after));
+        });
+        t('formatStorageGB formats sub-terabyte sizes', () => {
+            assertEqual(formatStorageGB(500), '500 GB');
+        });
+        t('formatStorageGB converts to TB above 1024 GB', () => {
+            assertEqual(formatStorageGB(2048), '2.00 TB');
+        });
+        t('formatStorageGB rejects invalid input safely', () => {
+            assertEqual(formatStorageGB(-5), '—');
+            assertEqual(formatStorageGB(NaN), '—');
+        });
+
+        return cases;
+    },
+
+    run() {
+        const cases = this.define();
+        this.results = cases.map(({ name, fn }) => {
+            try {
+                fn();
+                return { name, pass: true };
+            } catch (e) {
+                return { name, pass: false, error: e.message };
+            }
+        });
+        this.render();
+
+        const passed = this.results.filter(r => r.pass).length;
+        const total = this.results.length;
+        if (typeof vaultEngine !== 'undefined' && vaultEngine) {
+            const level = passed === total ? 'SUCCESS' : 'ERROR';
+            vaultEngine.logEvent(level, 'SELF-TEST', `Diagnostic suite: ${passed}/${total} checks passed.`);
+        }
+        return { passed, total };
+    },
+
+    render() {
+        const list = document.getElementById('selftest-results');
+        const summary = document.getElementById('selftest-summary');
+        if (!list) return;
+
+        const passed = this.results.filter(r => r.pass).length;
+        const total = this.results.length;
+
+        list.innerHTML = this.results.map(r => `
+            <div class="selftest-row ${r.pass ? 'selftest-pass' : 'selftest-fail'}">
+                <i class="fa-solid ${r.pass ? 'fa-circle-check' : 'fa-circle-xmark'}" aria-hidden="true"></i>
+                <span class="selftest-name">${escapeHtml(r.name)}</span>
+                ${r.pass ? '' : `<span class="selftest-error">${escapeHtml(r.error || 'failed')}</span>`}
+            </div>
+        `).join('');
+
+        if (summary) {
+            summary.textContent = `${passed} / ${total} checks passed`;
+            summary.className = `calc-status-pill ${passed === total ? 'calc-status-ok' : 'calc-status-warn'}`;
+        }
+    }
+};
 
 /* ---------------------------------------------------------
    Bootstrap
@@ -1732,6 +2026,12 @@ function initVaultApp() {
         console.warn('Vault: ripple button effect disabled —', e);
     }
 
+    try {
+        vaultTests.run();
+    } catch (e) {
+        console.warn('Vault: self-test suite failed to run —', e);
+    }
+
     if (boot) {
         boot.run();
     } else {
@@ -1740,8 +2040,10 @@ function initVaultApp() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initVaultApp);
-} else {
-    initVaultApp();
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVaultApp);
+    } else {
+        initVaultApp();
+    }
 }
